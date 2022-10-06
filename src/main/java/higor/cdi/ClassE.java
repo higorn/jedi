@@ -2,9 +2,9 @@ package higor.cdi;
 
 import javax.inject.Inject;
 
-public class ClassA {
-
+public class ClassE {
     @Inject
-    public ClassA(ClassE e) {
+    public ClassE(ClassA a) {
+
     }
 }

@@ -17,6 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,15 +28,16 @@ import static org.reflections.scanners.Scanners.SubTypes;
 import static org.reflections.util.ReflectionUtilsPredicates.withReturnType;
 
 
-public class MiniCDI extends CDI<Object> {
-    private final Reflections reflections;
+public class MiniDI extends CDI<Object> {
+    private final Reflections metadata;
+    private final Set<Class<?>> visited = new HashSet<>();
 
-    public MiniCDI(String prefix) {
+    public MiniDI(String prefix) {
         this(prefix, Scanners.values());
     }
 
-    public MiniCDI(String prefix, Scanners... scanners) {
-        reflections = new Reflections(prefix, scanners);
+    public MiniDI(String prefix, Scanners... scanners) {
+        metadata = new Reflections(prefix, scanners);
         setCDIProvider(() -> this);
     }
 
@@ -51,11 +53,23 @@ public class MiniCDI extends CDI<Object> {
 
     @Override
     public <U> Instance<U> select(Class<U> subtype, Annotation... annotations) {
+        if (visited.contains(subtype))
+            throw new CircularDependencyException();
+        visited.add(subtype);
+        BeanInstance<U> instance = resolveInstance(subtype);
+        visited.remove(subtype);
+        return instance;
+    }
+
+    private <U> BeanInstance<U> resolveInstance(Class<U> subtype) {
+        BeanInstance<U> instance;
         if (isAbstraction(subtype))
-            return new BeanInstance<>(findImplementations(subtype));
-        if (hasDefaultConstructorOnly(subtype.getConstructors()))
-            return new BeanInstance<>(Set.of(newInstanceFromDefaultConstructor(subtype)));
-        return new BeanInstance<>(resolveDependencies(subtype));
+            instance = new BeanInstance<>(findImplementations(subtype));
+        else if (hasDefaultConstructorOnly(subtype.getConstructors()))
+            instance = new BeanInstance<>(Set.of(newInstanceFromDefaultConstructor(subtype)));
+        else
+            instance = new BeanInstance<>(resolveDependencies(subtype));
+        return instance;
     }
 
     @Override
@@ -63,15 +77,15 @@ public class MiniCDI extends CDI<Object> {
         return null;
     }
 
-    private <U> Set<U> findImplementations(Class<U> clazz) {
-        var subTypes = reflections.get(SubTypes.of(clazz).asClass());
+    private <U> Set<U> findImplementations(Class<U> subtype) {
+        var subTypes = metadata.get(SubTypes.of(subtype).asClass());
         return subTypes.stream()
                 .map(c -> (U) select(c).get())
                 .collect(Collectors.toSet());
     }
 
-    private <U> Set<U> resolveDependencies(Class<U> clazz) {
-        var constructor = getInjectableConstructor(clazz);
+    private <U> Set<U> resolveDependencies(Class<U> subtype) {
+        var constructor = getInjectableConstructor(subtype);
         var resolvedConstructorParams = Arrays.stream(constructor.getParameters())
                 .map(this::resolveParameter)
                 .collect(Collectors.toList());
@@ -79,14 +93,14 @@ public class MiniCDI extends CDI<Object> {
         return Set.of((U)newInstance(constructor, resolvedConstructorParams));
     }
 
-    private Constructor<?> getInjectableConstructor(Class<?> clazz) {
-        var constructors = clazz.getConstructors();
+    private Constructor<?> getInjectableConstructor(Class<?> subtype) {
+        var constructors = subtype.getConstructors();
         if (constructors.length == 1)
             return constructors[0];
         return Arrays.stream(constructors)
                 .filter(c -> c.isAnnotationPresent(Inject.class))
                 .findFirst()
-                .orElseThrow(() -> new AmbiguousResolutionException("Ambiguous constructors in class " + clazz.getName()
+                .orElseThrow(() -> new AmbiguousResolutionException("Ambiguous constructors in class " + subtype.getName()
                         + ". Annotate at least one constructor with the @Inject annotation."));
     }
 
@@ -98,7 +112,7 @@ public class MiniCDI extends CDI<Object> {
     }
 
     private Set<Method> getProducers(Parameter p) {
-        return reflections.get(MethodsAnnotated.with(Produces.class)
+        return metadata.get(MethodsAnnotated.with(Produces.class)
                 .as(Method.class)
                 .filter(withReturnType(p.getType())));
     }
@@ -148,5 +162,8 @@ public class MiniCDI extends CDI<Object> {
     @Override
     public Object get() {
         return null;
+    }
+
+    public static class CircularDependencyException extends RuntimeException {
     }
 }

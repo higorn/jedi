@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.reflections.scanners.Scanners;
 
 import javax.enterprise.inject.AmbiguousResolutionException;
-import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
@@ -15,13 +14,13 @@ import javax.inject.Inject;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-class MiniCDITest {
+class MiniDITest {
 
     private CDI<Object> cdi;
 
     @BeforeEach
     void setUp() {
-        cdi = new MiniCDI("higor.cdi", Scanners.SubTypes, Scanners.TypesAnnotated);
+        cdi = new MiniDI("higor.cdi", Scanners.SubTypes, Scanners.TypesAnnotated);
     }
 
 //    @Test
@@ -42,7 +41,7 @@ class MiniCDITest {
         }
         Weld weld = new Weld();
         WeldContainer container = weld.initialize();
-        Instance<ClassA> instance = container.select(ClassA.class);
+        var instance = container.select(ClassA.class);
 //        var instance = container.select(D.class);
         var d = instance.get();
 //        A a = cdi.select(A.class).get();
@@ -97,7 +96,7 @@ class MiniCDITest {
                 return "hohoho";
             }
         }
-        var cdi = new MiniCDI("higor.cdi");
+        var cdi = new MiniDI("higor.cdi");
         var instance = cdi.select(A.class);
         assertNotNull(instance.get());
     }
@@ -137,7 +136,24 @@ class MiniCDITest {
         assertTrue(instanceF.isUnsatisfied());
     }
 
+    @Test
+    void circularDependency() {
+        assertThrows(MiniDI.CircularDependencyException.class, () -> cdi.select(CircA.class));
+    }
+
+    // Is all the objects need to be cached? What about the scope?
+    void cacheTheSearch() {
+
+    }
+
     interface A {}
     interface D {}
     interface F {}
+
+    class CircA {
+        public CircA(CircB b) {}
+    }
+    class CircB {
+        public CircB(CircA a) {}
+    }
 }
