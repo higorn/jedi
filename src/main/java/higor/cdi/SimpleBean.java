@@ -1,0 +1,102 @@
+package higor.cdi;
+
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.InjectionPoint;
+import javax.enterprise.inject.spi.Producer;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static higor.cdi.ReflectionsHelper.newInstance;
+import static higor.cdi.ReflectionsHelper.newInstanceFromDefaultConstructor;
+
+public class SimpleBean<T> implements Bean<T> {
+    private final Class<T> subtype;
+    private final Set<InjectionPoint> injectionPoints;
+    private final Constructor<T> constructor;
+    private final Producer<T> producer;
+
+    public SimpleBean(Class<T> subtype, Set<InjectionPoint> injectionPoints) {
+        this(subtype, injectionPoints, null);
+    }
+
+    public SimpleBean(Class<T> subtype, Set<InjectionPoint> injectionPoints, Constructor<T> constructor) {
+        this(subtype, injectionPoints, constructor, null);
+    }
+
+    public SimpleBean(Class<T> subtype, Set<InjectionPoint> injectionPoints, Constructor<T> constructor,
+                      Producer<T> producer) {
+        this.subtype = subtype;
+        this.injectionPoints = injectionPoints;
+        this.constructor = constructor;
+        this.producer = producer;
+    }
+
+    @Override
+    public Class<?> getBeanClass() {
+        return subtype;
+    }
+
+    @Override
+    public Set<InjectionPoint> getInjectionPoints() {
+        return injectionPoints;
+    }
+
+    @Override
+    public boolean isNullable() {
+        return false;
+    }
+
+    @Override
+    public T create(CreationalContext<T> creationalContext) {
+        if (producer != null)
+            return producer.produce(null);
+        if (constructor == null)
+            return newInstanceFromDefaultConstructor(subtype);
+        List<Object> constructorParams = injectionPoints.stream().map(this::resolveParameter).collect(Collectors.toList());
+        return newInstance(constructor, constructorParams);
+    }
+
+    private Object resolveParameter(InjectionPoint injectionPoint) {
+        return injectionPoint.getBean().create(null);
+    }
+
+    @Override
+    public void destroy(T t, CreationalContext<T> creationalContext) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public Set<Type> getTypes() {
+        return Set.of();
+    }
+
+    @Override
+    public Set<Annotation> getQualifiers() {
+        return Set.of();
+    }
+
+    @Override
+    public Class<? extends Annotation> getScope() {
+        return null;
+    }
+
+    @Override
+    public String getName() {
+        return null;
+    }
+
+    @Override
+    public Set<Class<? extends Annotation>> getStereotypes() {
+        return Set.of();
+    }
+
+    @Override
+    public boolean isAlternative() {
+        return false;
+    }
+}

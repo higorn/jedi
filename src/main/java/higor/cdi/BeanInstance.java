@@ -1,16 +1,17 @@
 package higor.cdi;
 
 import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.util.TypeLiteral;
 import java.lang.annotation.Annotation;
 import java.util.Iterator;
 import java.util.Set;
 
 public class BeanInstance<T> implements Instance<T> {
-    private T bean;
-    private final Set<T> allBeans;
+    private final Set<Bean<T>> allBeans;
+    private Bean<T> bean;
 
-    public BeanInstance(Set<T> allBeans) {
+    public BeanInstance(Set<Bean<T>> allBeans) {
         this.allBeans = allBeans;
         if (allBeans.size() == 1)
             bean = allBeans.iterator().next();
@@ -53,6 +54,10 @@ public class BeanInstance<T> implements Instance<T> {
 
     @Override
     public T get() {
+        return bean.create(null);
+    }
+
+    public Bean<T> getBean() {
         return bean;
     }
 }

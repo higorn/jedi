@@ -1,14 +1,16 @@
 package higor.cdi;
 
+import org.reflections.ReflectionsException;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.List;
 
-public class ReflectionHelper {
+public class ReflectionsHelper {
 
-    private ReflectionHelper() {}
+    private ReflectionsHelper() {}
     public static boolean hasDefaultConstructorOnly(Constructor<?>[] constructors) {
         if (constructors.length == 0)
             return true;
@@ -27,11 +29,11 @@ public class ReflectionHelper {
         return aClass.isInterface() || Modifier.isAbstract(aClass.getModifiers());
     }
 
-    public static Object newInstance(Constructor<?> constructor, List<Object> params) {
+    public static <U> U newInstance(Constructor<U> constructor, List<Object> params) {
         try {
             return constructor.newInstance(params.toArray());
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
+            throw new ReflectionsException(e);
         }
     }
 
@@ -42,7 +44,7 @@ public class ReflectionHelper {
                 return newInnerClassInstance(c, parameters);
             return c.getDeclaredConstructor().newInstance();
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new ReflectionsException(e);
         }
     }
 
@@ -50,7 +52,7 @@ public class ReflectionHelper {
             throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         var param0 = parameters[0];
         var type = param0.getType();
-        var o = newInstanceFromDefaultConstructor((Class<T>) type);
+        var o = newInstanceFromDefaultConstructor(type);
         return c.getDeclaredConstructor(type).newInstance(o);
     }
 }
