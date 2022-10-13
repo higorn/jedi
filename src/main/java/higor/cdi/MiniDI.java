@@ -11,6 +11,7 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.util.TypeLiteral;
 import javax.inject.Inject;
+import javax.inject.Qualifier;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -118,11 +119,21 @@ public class MiniDI extends CDI<Object> {
     }
 
     private Object resolveParameterWithoutProducer(Parameter p) {
+        var qualifiers = getQualifiers(p);
         var className = p.getDeclaringExecutable().getDeclaringClass().getName();
         if (p.getType().isPrimitive())
             throw new UnsatisfiedResolutionException("Unsatisfied dependencies for type "
                     + p.getType().getSimpleName() + " as parameter of " + className);
-        return select(p.getType()).get();
+        return select(p.getType(), qualifiers).get();
+//        return select(p.getType()).get();
+    }
+
+    private Annotation[] getQualifiers(Parameter p) {
+        return Arrays.stream(p.getAnnotations())
+                .filter(a -> metadata.get(SubTypes.of(Qualifier.class).as(Annotation.class)).stream()
+                        .anyMatch(q -> q.equals(a)))
+                .collect(Collectors.toSet())
+                .toArray(new Annotation[]{});
     }
 
     private Object resolveParamenterWithProducers(Set<Method> producers) {
