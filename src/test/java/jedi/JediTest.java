@@ -15,149 +15,153 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JediTest {
 
-    private CDI<Object> cdi;
+  private CDI<Object> cdi;
 
-    @BeforeEach
-    void setUp() {
-        cdi = new Jedi("jedi", Scanners.SubTypes, Scanners.TypesAnnotated);
+  @BeforeEach
+  void setUp() {
+    cdi = new Jedi("jedi", Scanners.SubTypes, Scanners.TypesAnnotated);
+  }
+
+  //    @Test
+  void shouldGetAClassInstanceByTheClassType() {
+    ClassA a = ClassAFactory.getClassA();
+    //        MiniCDI cdi = new MiniCDI();
+    //        ClassA a = cdi.get(ClassA.class);
+    assertNotNull(a);
+  }
+
+  //        @Test
+  void implementationAmbiguity() {
+    //        class B implements A {}
+    //        class C implements A {}
+    class D {
+      @Inject
+      private A a;
     }
+    Weld weld = new Weld();
+    WeldContainer container = weld.initialize();
+    //        var instance = container.select(ClassA.class);
+    var instance = container.select(ClassD.class);
+    var d = instance.get();
+    //        A a = cdi.select(A.class).get();
+    //        assertNotNull(d);
+  }
 
-//    @Test
-    void shouldGetAClassInstanceByTheClassType() {
-        ClassA a = ClassAFactory.getClassA();
-//        MiniCDI cdi = new MiniCDI();
-//        ClassA a = cdi.get(ClassA.class);
-        assertNotNull(a);
+  @Test
+  void theClassHasOnlyTheDefaultConstructor() {
+    class A {}
+    var a = cdi.select(A.class).get();
+    assertNotNull(a);
+  }
+
+  @Test
+  void aClassWithOnlyOneEmptyPublicConstructor() {
+    class A {
+      public A() {}
     }
+    var a = cdi.select(A.class).get();
+    assertNotNull(a);
+  }
 
-//        @Test
-    void implementationAmbiguity() {
-//        class B implements A {}
-//        class C implements A {}
-        class D {
-            @Inject
-            private A a;
-        }
-        Weld weld = new Weld();
-        WeldContainer container = weld.initialize();
-//        var instance = container.select(ClassA.class);
-        var instance = container.select(ClassD.class);
-        var d = instance.get();
-//        A a = cdi.select(A.class).get();
-//        assertNotNull(d);
+  @Test
+  void aClassWithMultipleConstructorsThatCannotBeResolved() {
+    class A {
+      public A() {}
+      public A(String str) {}
     }
+    assertThrows(AmbiguousResolutionException.class, () -> cdi.select(A.class));
+  }
 
-    @Test
-    void theClassHasOnlyTheDefaultConstructor() {
-        class A {}
-        var a = cdi.select(A.class).get();
-        assertNotNull(a);
+  @Test
+  void aClassWithMultipleConstructorsThatCanBeResolved_andWithAnUnresolvableDependency() {
+    class A {
+      public A() {}
+
+      @Inject
+      public A(String str) {}
     }
+    assertThrows(AmbiguousResolutionException.class, () -> cdi.select(A.class));
+  }
 
-    @Test
-    void aClassWithOnlyOneEmptyPublicConstructor() {
-        class A {
-            public A() {}
-        }
-        var a = cdi.select(A.class).get();
-        assertNotNull(a);
+  @Test
+  void aClassWithMultipleConstructorsThatCanBeResolved_andWithAnResolvableDependency() {
+    class A {
+      public A() {}
+
+      @Inject
+      public A(String str) {}
     }
-
-    @Test
-    void aClassWithMultipleConstructorsThatCannotBeResolved() {
-        class A {
-            public A() {}
-            public A(String str) {}
-        }
-        assertThrows(AmbiguousResolutionException.class, () -> cdi.select(A.class));
+    class StrFactory {
+      @Produces
+      public String getStr() {
+        return "hohoho";
+      }
     }
+    var cdi = new Jedi("jedi");
+    var instance = cdi.select(A.class);
+    assertNotNull(instance.get());
+  }
 
-    @Test
-    void aClassWithMultipleConstructorsThatCanBeResolved_andWithAnUnresolvableDependency() {
-        class A {
-            public A() {}
-            @Inject
-            public A(String str) {}
-        }
-        assertThrows(AmbiguousResolutionException.class, () -> cdi.select(A.class));
-    }
+  @Test
+  void findAnInterfaceImplementation() {
+    class B implements A {}
+    A a = cdi.select(A.class).get();
+    assertNotNull(a);
+    assertTrue(a instanceof B);
+  }
 
-    @Test
-    void aClassWithMultipleConstructorsThatCanBeResolved_andWithAnResolvableDependency() {
-        class A {
-            public A() {}
-            @Inject
-            public A(String str) {}
-        }
-        class StrFactory {
-            @Produces
-            public String getStr() {
-                return "hohoho";
-            }
-        }
-        var cdi = new Jedi("jedi");
-        var instance = cdi.select(A.class);
-        assertNotNull(instance.get());
-    }
+  @Test
+  void multipleSubtypesWithoutQualifier() {
+    class B implements D {}
+    class C implements D {}
+    var instance = cdi.select(D.class);
+    assertTrue(instance.isAmbiguous());
+  }
 
-    @Test
-    void findAnInterfaceImplementation() {
-        class B implements A {}
-        A a = cdi.select(A.class).get();
-        assertNotNull(a);
-        assertTrue(a instanceof B);
-    }
+  @Test
+  void findAnConcreteInstanceFromAnAbstract() {
+    abstract class E {}
+    class B extends E {}
+    var e = cdi.select(E.class).get();
+    assertNotNull(e);
+    assertTrue(e instanceof B);
+  }
 
-    @Test
-    void multipleSubtypesWithoutQualifier() {
-        class B implements D {
-        }
-        class C implements D {
-        }
-        var instance = cdi.select(D.class);
-        assertTrue(instance.isAmbiguous());
-    }
+  @Test
+  void interfaceWithoutImplementation() {
+    var instanceA = cdi.select(A.class);
+    assertFalse(instanceA.isUnsatisfied());
+    var instanceF = cdi.select(F.class);
+    assertTrue(instanceF.isUnsatisfied());
+  }
 
+  @Test
+  void circularDependency() {
+    assertThrows(Jedi.CircularDependencyException.class, () -> cdi.select(CircA.class));
+  }
 
-    @Test
-    void findAnConcreteInstanceFromAnAbstract() {
-        abstract class E {}
-        class B extends E {}
-        var e = cdi.select(E.class).get();
-        assertNotNull(e);
-        assertTrue(e instanceof B);
-    }
+  // Is all the objects need to be cached? What about the scope?
+  void cacheTheSearch() {
 
-    @Test
-    void interfaceWithoutImplementation() {
-        var instanceA = cdi.select(A.class);
-        assertFalse(instanceA.isUnsatisfied());
-        var instanceF = cdi.select(F.class);
-        assertTrue(instanceF.isUnsatisfied());
-    }
+  }
 
-    @Test
-    void circularDependency() {
-        assertThrows(Jedi.CircularDependencyException.class, () -> cdi.select(CircA.class));
-    }
+  interface A {}
 
-    // Is all the objects need to be cached? What about the scope?
-    void cacheTheSearch() {
+  interface D {}
 
-    }
+  interface F {}
 
-    interface A {}
-    interface D {}
-    interface F {}
-    interface G {
-        D getD();
-        String getStr();
-    }
+  interface G {
+    D getD();
 
-    class CircA {
-        public CircA(CircB b) {}
-    }
-    class CircB {
-        public CircB(CircA a) {}
-    }
+    String getStr();
+  }
+
+  class CircA {
+    public CircA(CircB b) {}
+  }
+
+  class CircB {
+    public CircB(CircA a) {}
+  }
 }
