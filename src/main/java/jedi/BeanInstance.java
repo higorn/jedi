@@ -75,6 +75,10 @@ public class BeanInstance<T> implements Instance<T> {
   public Bean<T> findBean(Set<Annotation> qualifiers) {
     if (bean != null)
       return bean;
+    return getQualifiedBean(qualifiers);
+  }
+
+  private Bean<T> getQualifiedBean(Set<Annotation> qualifiers) {
     var qualifiedBeans = allBeans.stream()
         .filter(b -> b.getQualifiers().containsAll(qualifiers))
         .collect(Collectors.toSet());

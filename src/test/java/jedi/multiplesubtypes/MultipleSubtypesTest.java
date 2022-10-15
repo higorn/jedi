@@ -1,5 +1,6 @@
 package jedi.multiplesubtypes;
 
+import jakarta.enterprise.inject.AmbiguousResolutionException;
 import jedi.Jedi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,13 @@ public class MultipleSubtypesTest {
   @BeforeEach
   void setUp() {
     jedi = new Jedi("jedi.multiplesubtypes");
+  }
+
+//  @Test
+  void multipleSubtypesWithoutQualifier() {
+    var instance = jedi.select(Saber.class);
+    assertTrue(instance.isAmbiguous());
+    assertThrows(AmbiguousResolutionException.class, () -> instance.get());
   }
 
   @Test
