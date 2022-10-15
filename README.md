@@ -1,6 +1,5 @@
 # Jedi
-Java easy dependency injection framework.
-This is a humble implementation of the DI part of the [jakarta CDI specification](https://jakarta.ee/specifications/cdi/3.0/jakarta-cdi-spec-3.0.html).
+The Java Easy Dependency Injection (JEDI) framework is a humble implementation of the DI part of the [jakarta CDI specification](https://jakarta.ee/specifications/cdi/3.0/jakarta-cdi-spec-3.0.html).
 This is a work in progress project with the intention to cover only the DI aspect of the the above mentioned jakarta 
 spec.
 The main goal is to create a lightweight and easy DI framework focused in the small projects needs.
