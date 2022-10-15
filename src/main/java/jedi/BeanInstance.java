@@ -12,19 +12,21 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class BeanInstance<T> implements Instance<T> {
-  private final Set<Bean<T>> allBeans;
-  private final Type         superType;
-  private       Bean<T>      bean;
+  private final Set<Bean<T>>    allBeans;
+  private final Type            superType;
+  private final Set<Annotation> qualifiers;
+  private       Bean<T>         bean;
 
   public BeanInstance(Set<Bean<T>> allBeans) {
-    this(allBeans, null);
+    this(allBeans, null, Set.of());
   }
 
-  public BeanInstance(Set<Bean<T>> allBeans, Type superType) {
+  public BeanInstance(Set<Bean<T>> allBeans, Type superType, Set<Annotation> qualifiers) {
     this.allBeans = allBeans;
     if (allBeans.size() == 1)
       bean = allBeans.iterator().next();
     this.superType = superType == null ? getSuperType() : superType;
+    this.qualifiers = qualifiers;
   }
 
   private Type getSuperType() {
@@ -80,10 +82,13 @@ public class BeanInstance<T> implements Instance<T> {
 
   @Override
   public T get() {
+    if (bean != null)
+      return bean.create(null);
+    bean = getQualifiedBean(qualifiers);
     return bean.create(null);
   }
 
-  public Bean<T> findBean(Set<Annotation> qualifiers) {
+  public Bean<T> findBean() {
     if (bean != null)
       return bean;
     return getQualifiedBean(qualifiers);

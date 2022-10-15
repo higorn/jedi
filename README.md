@@ -56,8 +56,8 @@ class StringFactory {
 class Main {
   
   public static void main(String... args) {
-    var jedi = new Jedi("example");
-    SaberHandler saberHandler = jedi.getBean(SaberHandler.class);
+    var di = new JeDI("example");
+    SaberHandler saberHandler = di.getBean(SaberHandler.class);
 
     assertTrue(saberHandler instanceof MasterJedi);
     assertNotNull(saberHandler.getSaber());

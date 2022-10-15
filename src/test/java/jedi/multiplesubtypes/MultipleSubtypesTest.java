@@ -3,7 +3,7 @@ package jedi.multiplesubtypes;
 import jakarta.enterprise.inject.AmbiguousResolutionException;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Qualifier;
-import jedi.Jedi;
+import jedi.JeDI;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,18 +15,18 @@ import java.lang.annotation.Target;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MultipleSubtypesTest {
-  private Jedi jedi;
+  private JeDI jedi;
 
   @BeforeEach
   void setUp() {
-    jedi = new Jedi("jedi.multiplesubtypes");
+    jedi = new JeDI("jedi.multiplesubtypes");
   }
 
-//  @Test
+  @Test
   void multipleSubtypesWithoutQualifier() {
     var instance = jedi.select(Saber.class);
     assertTrue(instance.isAmbiguous());
-    assertThrows(AmbiguousResolutionException.class, () -> instance.get());
+    assertThrows(AmbiguousResolutionException.class, instance::get);
   }
 
   @Test

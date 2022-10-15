@@ -12,13 +12,13 @@ import org.reflections.scanners.Scanners;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class JediTest {
+class JeDITest {
 
   private CDI<Object> cdi;
 
   @BeforeEach
   void setUp() {
-    cdi = new Jedi("jedi", Scanners.SubTypes, Scanners.TypesAnnotated);
+    cdi = new JeDI("jedi", Scanners.SubTypes, Scanners.TypesAnnotated);
   }
 
   //    @Test
@@ -96,7 +96,7 @@ class JediTest {
         return "hohoho";
       }
     }
-    var cdi = new Jedi("jedi");
+    var cdi = new JeDI("jedi");
     var instance = cdi.select(A.class);
     assertNotNull(instance.get());
   }
@@ -136,7 +136,7 @@ class JediTest {
 
   @Test
   void circularDependency() {
-    assertThrows(Jedi.CircularDependencyException.class, () -> cdi.select(CircA.class));
+    assertThrows(JeDI.CircularDependencyException.class, () -> cdi.select(CircA.class));
   }
 
   // Is all the objects need to be cached? What about the scope?
