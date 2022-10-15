@@ -58,7 +58,7 @@ public class Jedi extends CDI<Object> {
         if (isAbstraction(subtype))
             instance = new BeanInstance<>(findImplementations(subtype, qualifiers), subtype);
         else if (hasDefaultConstructorOnly(subtype.getConstructors()))
-            instance = new BeanInstance<>(Set.of(new SimpleBean<>(subtype, Set.of())));
+            instance = new BeanInstance<>(Set.of(new JediBean<>(subtype, Set.of())));
         else
             instance = new BeanInstance<>(resolveDependencies(subtype));
         return instance;
@@ -80,16 +80,16 @@ public class Jedi extends CDI<Object> {
         var producer = getProducer(subtype);
         if (producer == null) {
             var constructor = getInjectableConstructor(subtype);
-            return Set.of(new SimpleBean<>(subtype, getInjectionPoints(constructor.getParameters()), constructor));
+            return Set.of(new JediBean<>(subtype, getInjectionPoints(constructor.getParameters()), constructor));
         }
-        return Set.of(new SimpleBean<>(subtype, null, null, producer));
+        return Set.of(new JediBean<>(subtype, null, null, producer));
     }
 
     private <U> Producer<U> getProducer(Class<U> subtype) {
         return metadata.get(MethodsAnnotated.with(Produces.class)
                 .as(Method.class)
                 .filter(withReturnType(subtype))).stream()
-                .map(m -> new SimpleProducer<U>(m, select(m.getDeclaringClass())))
+                .map(m -> new BeanProducer<U>(m, select(m.getDeclaringClass())))
                 .findFirst()
                 .orElse(null);
     }

@@ -10,10 +10,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
 
-public class SimpleProducer<T> implements Producer<T> {
+public class BeanProducer<T> implements Producer<T> {
     private final Method producerMethod;
     private final Instance<?> producerDeclaringClassInstance;
-    public SimpleProducer(Method m, Instance<?> instance) {
+    public BeanProducer(Method m, Instance<?> instance) {
         producerMethod = m;
         producerDeclaringClassInstance = instance;
     }

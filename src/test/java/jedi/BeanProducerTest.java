@@ -7,12 +7,12 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-class SimpleProducerTest {
+class BeanProducerTest {
 
     @Test
     void producesAnInstanceFromAMethod() throws NoSuchMethodException {
-        var instance = new BeanInstance<>(Set.of(new SimpleBean<>(getClass(), Set.of())));
-        Producer<A> producer = new SimpleProducer<>(getClass().getDeclaredMethod("getA"), instance);
+        var instance = new BeanInstance<>(Set.of(new JediBean<>(getClass(), Set.of())));
+        Producer<A> producer = new BeanProducer<>(getClass().getDeclaredMethod("getA"), instance);
         A a = producer.produce(null);
         assertNotNull(a);
     }

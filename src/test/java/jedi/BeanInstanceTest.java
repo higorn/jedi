@@ -16,7 +16,7 @@ class BeanInstanceTest {
     @Test
     void aBeanWithNoDependencies() {
         class A {}
-        Bean<A> bean = new SimpleBean<>(A.class, Set.of());
+        Bean<A> bean = new JediBean<>(A.class, Set.of());
         Instance<A> instance = new BeanInstance<>(Set.of(bean));
         var a = instance.get();
         assertNotNull(a);
@@ -31,12 +31,12 @@ class BeanInstanceTest {
                 this.b = b;
             }
         }
-        var injectionPoint0 = new ConstructorInjectionPoint(Set.of(), new SimpleBean<>(getClass(), Set.of()));
-        var injectionPointB = new ConstructorInjectionPoint(Set.of(), new SimpleBean<>(B.class, Set.of()));
+        var injectionPoint0 = new ConstructorInjectionPoint(Set.of(), new JediBean<>(getClass(), Set.of()));
+        var injectionPointB = new ConstructorInjectionPoint(Set.of(), new JediBean<>(B.class, Set.of()));
         LinkedHashSet<InjectionPoint> injectionPoints = new LinkedHashSet<>();
         injectionPoints.add(injectionPoint0);
         injectionPoints.add(injectionPointB);
-        Bean<A> bean = new SimpleBean<>(A.class, injectionPoints, (Constructor<A>) A.class.getConstructors()[0]);
+        Bean<A> bean = new JediBean<>(A.class, injectionPoints, (Constructor<A>) A.class.getConstructors()[0]);
         Instance<A> instance = new BeanInstance<>(Set.of(bean));
         var a = instance.get();
         assertNotNull(a);

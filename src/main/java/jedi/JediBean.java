@@ -14,22 +14,22 @@ import java.util.stream.Collectors;
 import static jedi.ReflectionsHelper.newInstance;
 import static jedi.ReflectionsHelper.newInstanceFromDefaultConstructor;
 
-public class SimpleBean<T> implements Bean<T> {
+public class JediBean<T> implements Bean<T> {
     private final Class<T> subtype;
     private final Set<InjectionPoint> injectionPoints;
     private final Constructor<T> constructor;
     private final Producer<T> producer;
     private final Set<Annotation> qualifiers;
 
-    public SimpleBean(Class<T> subtype, Set<InjectionPoint> injectionPoints) {
+    public JediBean(Class<T> subtype, Set<InjectionPoint> injectionPoints) {
         this(subtype, injectionPoints, null);
     }
 
-    public SimpleBean(Class<T> subtype, Set<InjectionPoint> injectionPoints, Constructor<T> constructor) {
+    public JediBean(Class<T> subtype, Set<InjectionPoint> injectionPoints, Constructor<T> constructor) {
         this(subtype, injectionPoints, constructor, null);
     }
 
-    public SimpleBean(Class<T> subtype, Set<InjectionPoint> injectionPoints, Constructor<T> constructor,
+    public JediBean(Class<T> subtype, Set<InjectionPoint> injectionPoints, Constructor<T> constructor,
                       Producer<T> producer) {
         this.subtype = subtype;
         this.injectionPoints = injectionPoints;
