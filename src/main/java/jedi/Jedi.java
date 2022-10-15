@@ -1,13 +1,13 @@
 package jedi;
 
+import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.UnsatisfiedResolutionException;
+import jakarta.enterprise.inject.spi.*;
+import jakarta.enterprise.util.TypeLiteral;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.UnsatisfiedResolutionException;
-import javax.enterprise.inject.spi.*;
-import javax.enterprise.util.TypeLiteral;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -57,6 +57,36 @@ public class Jedi extends CDI<Object> {
     return instance;
   }
 
+  @Override
+  public <U> Instance<U> select(TypeLiteral<U> typeLiteral, Annotation... annotations) {
+    return null;
+  }
+
+  @Override
+  public boolean isUnsatisfied() {
+    return false;
+  }
+
+  @Override
+  public boolean isAmbiguous() {
+    return false;
+  }
+
+  @Override
+  public void destroy(Object o) {
+
+  }
+
+  @Override
+  public Handle<Object> getHandle() {
+    return null;
+  }
+
+  @Override
+  public Iterable<? extends Handle<Object>> handles() {
+    return null;
+  }
+
   private <U> BeanInstance<U> resolveInstance(Class<U> subtype, Set<Annotation> qualifiers) {
     BeanInstance<U> instance;
     if (isAbstraction(subtype))
@@ -66,11 +96,6 @@ public class Jedi extends CDI<Object> {
     else
       instance = new BeanInstance<>(resolveDependencies(subtype));
     return instance;
-  }
-
-  @Override
-  public <U> Instance<U> select(TypeLiteral<U> typeLiteral, Annotation... annotations) {
-    return null;
   }
 
   private <U> Set<Bean<U>> findImplementations(Class<U> subtype, Set<Annotation> qualifiers) {
@@ -117,27 +142,12 @@ public class Jedi extends CDI<Object> {
   }
 
   @Override
-  public boolean isUnsatisfied() {
-    return false;
-  }
-
-  @Override
-  public boolean isAmbiguous() {
-    return false;
-  }
-
-  @Override
-  public void destroy(Object o) {
-    // do nothing
-  }
-
-  @Override
-  public Iterator<Object> iterator() {
+  public Object get() {
     return null;
   }
 
   @Override
-  public Object get() {
+  public Iterator<Object> iterator() {
     return null;
   }
 

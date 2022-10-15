@@ -12,15 +12,15 @@
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cdi-api.version>2.0-PFD2</cdi-api.version>
+    <cdi-api.version>4.0.1</cdi-api.version>
     <weld-se-core.version>5.1.0.Final</weld-se-core.version>
     <junit.version>5.9.0</junit.version>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>javax.enterprise</groupId>
-      <artifactId>cdi-api</artifactId>
+      <groupId>jakarta.enterprise</groupId>
+      <artifactId>jakarta.enterprise.cdi-api</artifactId>
       <version>${cdi-api.version}</version>
     </dependency>
 

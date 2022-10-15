@@ -1,8 +1,8 @@
 package jedi;
 
+import jakarta.enterprise.inject.spi.Producer;
 import org.junit.jupiter.api.Test;
 
-import javax.enterprise.inject.spi.Producer;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;

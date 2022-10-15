@@ -1,9 +1,10 @@
 package jedi;
 
-import javax.enterprise.inject.AmbiguousResolutionException;
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.util.TypeLiteral;
+import jakarta.enterprise.inject.AmbiguousResolutionException;
+import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.util.TypeLiteral;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Iterator;
@@ -48,6 +49,16 @@ public class BeanInstance<T> implements Instance<T> {
   }
 
   @Override
+  public Handle<T> getHandle() {
+    return null;
+  }
+
+  @Override
+  public Iterable<? extends Handle<T>> handles() {
+    return null;
+  }
+
+  @Override
   public boolean isUnsatisfied() {
     return allBeans.isEmpty();
   }
@@ -75,6 +86,10 @@ public class BeanInstance<T> implements Instance<T> {
   public Bean<T> findBean(Set<Annotation> qualifiers) {
     if (bean != null)
       return bean;
+    return getQualifiedBean(qualifiers);
+  }
+
+  private Bean<T> getQualifiedBean(Set<Annotation> qualifiers) {
     var qualifiedBeans = allBeans.stream()
         .filter(b -> b.getQualifiers().containsAll(qualifiers))
         .collect(Collectors.toSet());

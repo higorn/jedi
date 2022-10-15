@@ -1,10 +1,9 @@
 package jedi;
 
+import jakarta.enterprise.inject.Alternative;
+import jakarta.enterprise.inject.Any;
+import jakarta.enterprise.inject.Default;
 import org.junit.jupiter.api.Test;
-
-import javax.enterprise.inject.Alternative;
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Default;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

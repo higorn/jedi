@@ -1,10 +1,10 @@
 package jedi;
 
+import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.InjectionPoint;
 import org.junit.jupiter.api.Test;
 
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.InjectionPoint;
 import java.lang.reflect.Constructor;
 import java.util.LinkedHashSet;
 import java.util.Set;
