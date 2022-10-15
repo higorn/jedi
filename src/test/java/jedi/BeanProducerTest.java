@@ -9,17 +9,17 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class BeanProducerTest {
 
-    @Test
-    void producesAnInstanceFromAMethod() throws NoSuchMethodException {
-        var instance = new BeanInstance<>(Set.of(new JediBean<>(getClass(), Set.of())));
-        Producer<A> producer = new BeanProducer<>(getClass().getDeclaredMethod("getA"), instance);
-        A a = producer.produce(null);
-        assertNotNull(a);
-    }
+  @Test
+  void producesAnInstanceFromAMethod() throws NoSuchMethodException {
+    var instance = new BeanInstance<>(Set.of(new JediBean<>(getClass(), Set.of())));
+    Producer<A> producer = new BeanProducer<>(getClass().getDeclaredMethod("getA"), instance);
+    A a = producer.produce(null);
+    assertNotNull(a);
+  }
 
-    static class A {}
+  static class A {}
 
-    A getA() {
-        return new A();
-    }
+  A getA() {
+    return new A();
+  }
 }
