@@ -1,9 +1,7 @@
-package higor.cdi;
-
-import javax.inject.Inject;
+package jedi;
 
 public class ClassE {
-    @Inject
+//    @Inject
     public ClassE(ClassA a) {
 
     }

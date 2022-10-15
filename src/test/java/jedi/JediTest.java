@@ -1,4 +1,4 @@
-package higor.cdi;
+package jedi;
 
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
@@ -13,14 +13,13 @@ import javax.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-
-class MiniDITest {
+class JediTest {
 
     private CDI<Object> cdi;
 
     @BeforeEach
     void setUp() {
-        cdi = new MiniDI("higor.cdi", Scanners.SubTypes, Scanners.TypesAnnotated);
+        cdi = new Jedi("jedi", Scanners.SubTypes, Scanners.TypesAnnotated);
     }
 
 //    @Test
@@ -41,11 +40,11 @@ class MiniDITest {
         }
         Weld weld = new Weld();
         WeldContainer container = weld.initialize();
-        var instance = container.select(ClassA.class);
-//        var instance = container.select(D.class);
+//        var instance = container.select(ClassA.class);
+        var instance = container.select(ClassD.class);
         var d = instance.get();
 //        A a = cdi.select(A.class).get();
-        assertNotNull(d);
+//        assertNotNull(d);
     }
 
     @Test
@@ -96,7 +95,7 @@ class MiniDITest {
                 return "hohoho";
             }
         }
-        var cdi = new MiniDI("higor.cdi");
+        var cdi = new Jedi("jedi");
         var instance = cdi.select(A.class);
         assertNotNull(instance.get());
     }
@@ -119,6 +118,7 @@ class MiniDITest {
         assertTrue(instance.isAmbiguous());
     }
 
+
     @Test
     void findAnConcreteInstanceFromAnAbstract() {
         abstract class E {}
@@ -138,7 +138,7 @@ class MiniDITest {
 
     @Test
     void circularDependency() {
-        assertThrows(MiniDI.CircularDependencyException.class, () -> cdi.select(CircA.class));
+        assertThrows(Jedi.CircularDependencyException.class, () -> cdi.select(CircA.class));
     }
 
     // Is all the objects need to be cached? What about the scope?
@@ -149,6 +149,10 @@ class MiniDITest {
     interface A {}
     interface D {}
     interface F {}
+    interface G {
+        D getD();
+        String getStr();
+    }
 
     class CircA {
         public CircA(CircB b) {}

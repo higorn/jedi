@@ -1,4 +1,4 @@
-package higor.cdi;
+package jedi;
 
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
