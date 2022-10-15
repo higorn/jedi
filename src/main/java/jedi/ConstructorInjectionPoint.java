@@ -1,4 +1,4 @@
-package higor.cdi;
+package jedi;
 
 import javax.enterprise.inject.spi.Annotated;
 import javax.enterprise.inject.spi.Bean;

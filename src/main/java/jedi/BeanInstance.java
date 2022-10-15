@@ -1,4 +1,4 @@
-package higor.cdi;
+package jedi;
 
 import javax.enterprise.inject.AmbiguousResolutionException;
 import javax.enterprise.inject.Instance;

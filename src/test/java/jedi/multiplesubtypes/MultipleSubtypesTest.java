@@ -1,6 +1,6 @@
-package higor.cdi.multiplesubtypes;
+package jedi.multiplesubtypes;
 
-import higor.cdi.MiniDI;
+import jedi.Jedi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,11 +14,11 @@ import java.lang.annotation.Target;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MultipleSubtypesTest {
-    private MiniDI cdi;
+    private Jedi cdi;
 
     @BeforeEach
     void setUp() {
-        cdi = new MiniDI("higor.cdi.multiplesubtypes");
+        cdi = new Jedi("jedi.multiplesubtypes");
     }
 
     @Test

@@ -1,4 +1,4 @@
-package higor.cdi;
+package jedi;
 
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
@@ -14,21 +14,21 @@ import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static higor.cdi.ReflectionsHelper.*;
+import static jedi.ReflectionsHelper.*;
 import static org.reflections.scanners.Scanners.MethodsAnnotated;
 import static org.reflections.scanners.Scanners.SubTypes;
 import static org.reflections.util.ReflectionUtilsPredicates.withReturnType;
 
 
-public class MiniDI extends CDI<Object> {
+public class Jedi extends CDI<Object> {
     private final Reflections metadata;
     private final Set<Class<?>> visited = new HashSet<>();
 
-    public MiniDI(String prefix) {
+    public Jedi(String prefix) {
         this(prefix, Scanners.values());
     }
 
-    public MiniDI(String prefix, Scanners... scanners) {
+    public Jedi(String prefix, Scanners... scanners) {
         metadata = new Reflections(prefix, scanners);
         setCDIProvider(() -> this);
     }

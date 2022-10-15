@@ -1,4 +1,4 @@
-package higor.cdi;
+package jedi;
 
 import org.reflections.ReflectionsException;
 

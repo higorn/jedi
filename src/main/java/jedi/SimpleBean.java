@@ -1,4 +1,4 @@
-package higor.cdi;
+package jedi;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static higor.cdi.ReflectionsHelper.newInstance;
-import static higor.cdi.ReflectionsHelper.newInstanceFromDefaultConstructor;
+import static jedi.ReflectionsHelper.newInstance;
+import static jedi.ReflectionsHelper.newInstanceFromDefaultConstructor;
 
 public class SimpleBean<T> implements Bean<T> {
     private final Class<T> subtype;

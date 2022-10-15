@@ -1,33 +1,25 @@
-package higor.cdi;
+package jedi;
 
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.reflections.scanners.Scanners;
 
-import javax.enterprise.inject.*;
+import javax.enterprise.inject.AmbiguousResolutionException;
+import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
-import javax.inject.Qualifier;
-
-import java.lang.annotation.*;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Parameter;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MiniDITest {
+class JediTest {
 
     private CDI<Object> cdi;
 
     @BeforeEach
     void setUp() {
-        cdi = new MiniDI("higor.cdi", Scanners.SubTypes, Scanners.TypesAnnotated);
+        cdi = new Jedi("jedi", Scanners.SubTypes, Scanners.TypesAnnotated);
     }
 
 //    @Test
@@ -103,7 +95,7 @@ class MiniDITest {
                 return "hohoho";
             }
         }
-        var cdi = new MiniDI("higor.cdi");
+        var cdi = new Jedi("jedi");
         var instance = cdi.select(A.class);
         assertNotNull(instance.get());
     }
@@ -146,7 +138,7 @@ class MiniDITest {
 
     @Test
     void circularDependency() {
-        assertThrows(MiniDI.CircularDependencyException.class, () -> cdi.select(CircA.class));
+        assertThrows(Jedi.CircularDependencyException.class, () -> cdi.select(CircA.class));
     }
 
     // Is all the objects need to be cached? What about the scope?
