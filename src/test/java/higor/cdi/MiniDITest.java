@@ -3,16 +3,23 @@ package higor.cdi;
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.reflections.scanners.Scanners;
 
-import javax.enterprise.inject.AmbiguousResolutionException;
-import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.*;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
+import javax.inject.Qualifier;
+
+import java.lang.annotation.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Parameter;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 
 class MiniDITest {
 
@@ -41,11 +48,11 @@ class MiniDITest {
         }
         Weld weld = new Weld();
         WeldContainer container = weld.initialize();
-        var instance = container.select(ClassA.class);
-//        var instance = container.select(D.class);
+//        var instance = container.select(ClassA.class);
+        var instance = container.select(ClassD.class);
         var d = instance.get();
 //        A a = cdi.select(A.class).get();
-        assertNotNull(d);
+//        assertNotNull(d);
     }
 
     @Test
@@ -119,6 +126,7 @@ class MiniDITest {
         assertTrue(instance.isAmbiguous());
     }
 
+
     @Test
     void findAnConcreteInstanceFromAnAbstract() {
         abstract class E {}
@@ -149,6 +157,10 @@ class MiniDITest {
     interface A {}
     interface D {}
     interface F {}
+    interface G {
+        D getD();
+        String getStr();
+    }
 
     class CircA {
         public CircA(CircB b) {}

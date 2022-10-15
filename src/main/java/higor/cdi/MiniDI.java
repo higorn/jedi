@@ -3,23 +3,18 @@ package higor.cdi;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 
-import javax.enterprise.inject.AmbiguousResolutionException;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.UnsatisfiedResolutionException;
 import javax.enterprise.inject.spi.*;
 import javax.enterprise.util.TypeLiteral;
-import javax.inject.Inject;
-import javax.inject.Qualifier;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static higor.cdi.ReflectionsHelper.hasDefaultConstructorOnly;
-import static higor.cdi.ReflectionsHelper.isAbstraction;
+import static higor.cdi.ReflectionsHelper.*;
 import static org.reflections.scanners.Scanners.MethodsAnnotated;
 import static org.reflections.scanners.Scanners.SubTypes;
 import static org.reflections.util.ReflectionUtilsPredicates.withReturnType;
@@ -53,15 +48,15 @@ public class MiniDI extends CDI<Object> {
         if (visited.contains(subtype))
             throw new CircularDependencyException();
         visited.add(subtype);
-        BeanInstance<U> instance = resolveInstance(subtype);
+        BeanInstance<U> instance = resolveInstance(subtype, getQualifiers(annotations));
         visited.remove(subtype);
         return instance;
     }
 
-    private <U> BeanInstance<U> resolveInstance(Class<U> subtype) {
+    private <U> BeanInstance<U> resolveInstance(Class<U> subtype, Set<Annotation> qualifiers) {
         BeanInstance<U> instance;
         if (isAbstraction(subtype))
-            instance = new BeanInstance<>(findImplementations(subtype));
+            instance = new BeanInstance<>(findImplementations(subtype, qualifiers), subtype);
         else if (hasDefaultConstructorOnly(subtype.getConstructors()))
             instance = new BeanInstance<>(Set.of(new SimpleBean<>(subtype, Set.of())));
         else
@@ -74,10 +69,10 @@ public class MiniDI extends CDI<Object> {
         return null;
     }
 
-    private <U> Set<Bean<U>> findImplementations(Class<U> subtype) {
+    private <U> Set<Bean<U>> findImplementations(Class<U> subtype, Set<Annotation> qualifiers) {
         var subTypes = metadata.get(SubTypes.of(subtype).asClass());
         return subTypes.stream()
-                .map(c -> ((BeanInstance<U>) select(c)).getBean())
+                .map(c -> ((BeanInstance<U>) select(c)).findBean(qualifiers))
                 .collect(Collectors.toSet());
     }
 
@@ -99,17 +94,6 @@ public class MiniDI extends CDI<Object> {
                 .orElse(null);
     }
 
-    private <U> Constructor<U> getInjectableConstructor(Class<U> subtype) {
-        var constructors = (Constructor<U>[]) subtype.getConstructors();
-        if (constructors.length == 1)
-            return constructors[0];
-        return Arrays.stream(constructors)
-                .filter(c -> c.isAnnotationPresent(Inject.class))
-                .findFirst()
-                .orElseThrow(() -> new AmbiguousResolutionException("Ambiguous constructors in class "
-                        + subtype.getName() + ". Annotate at least one constructor with the @Inject annotation."));
-    }
-
     private Set<InjectionPoint> getInjectionPoints(Parameter[] parameters) {
         // As this injection points are used to resolve constructor params, they need to be in order,
         // that's why it needs to be a ordered set.
@@ -119,21 +103,14 @@ public class MiniDI extends CDI<Object> {
     }
 
     private InjectionPoint resolveInjectionPoints(Parameter p) {
-        Annotation[] qualifiers = getQualifiers(p);
+        var qualifiers = getQualifiers(p);
         var className = p.getDeclaringExecutable().getDeclaringClass().getName();
         if (p.getType().isPrimitive())
             throw new UnsatisfiedResolutionException("Unsatisfied dependencies for type "
                     + p.getType().getSimpleName() + " as parameter of " + className);
-        Bean<?> bean = ((BeanInstance<?>) select(p.getType(), qualifiers)).getBean();
-        return new ConstructorInjectionPoint(Set.of(qualifiers), bean);
-    }
-
-    private Annotation[] getQualifiers(Parameter p) {
-        return Arrays.stream(p.getAnnotations())
-                .filter(a -> metadata.get(SubTypes.of(Qualifier.class).as(Annotation.class)).stream()
-                        .anyMatch(q -> q.equals(a)))
-                .collect(Collectors.toSet())
-                .toArray(new Annotation[]{});
+        Instance<?> instance = select(p.getType(), qualifiers.toArray(new Annotation[]{}));
+        Bean<?> bean = ((BeanInstance<?>) instance).findBean(qualifiers);
+        return new ConstructorInjectionPoint(qualifiers, bean);
     }
 
     @Override

@@ -2,11 +2,20 @@ package higor.cdi;
 
 import org.reflections.ReflectionsException;
 
+import javax.enterprise.inject.AmbiguousResolutionException;
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Default;
+import javax.inject.Inject;
+import javax.inject.Qualifier;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ReflectionsHelper {
 
@@ -27,6 +36,17 @@ public class ReflectionsHelper {
 
     public static <U> boolean isAbstraction(Class<U> aClass) {
         return aClass.isInterface() || Modifier.isAbstract(aClass.getModifiers());
+    }
+
+    public static <U> Constructor<U> getInjectableConstructor(Class<U> subtype) {
+        var constructors = (Constructor<U>[]) subtype.getConstructors();
+        if (constructors.length == 1)
+            return constructors[0];
+        return Arrays.stream(constructors)
+                .filter(c -> c.isAnnotationPresent(Inject.class))
+                .findFirst()
+                .orElseThrow(() -> new AmbiguousResolutionException("Ambiguous constructors in class "
+                        + subtype.getName() + ". Annotate at least one constructor with the @Inject annotation."));
     }
 
     public static <U> U newInstance(Constructor<U> constructor, List<Object> params) {
@@ -54,5 +74,22 @@ public class ReflectionsHelper {
         var type = param0.getType();
         var o = newInstanceFromDefaultConstructor(type);
         return c.getDeclaredConstructor(type).newInstance(o);
+    }
+
+    public static Set<Annotation> getQualifiers(Parameter p) {
+        return getQualifiers(p.getAnnotations());
+    }
+
+    public static <T> Set<Annotation> getQualifiers(Class<T> clazz) {
+        return getQualifiers(clazz.getAnnotations());
+    }
+
+    public static Set<Annotation> getQualifiers(Annotation... annotations) {
+        var qualifiers = Arrays.stream(annotations)
+                .filter(a -> a.annotationType().getAnnotation(Qualifier.class) != null)
+                .collect(Collectors.toSet());
+        qualifiers.add(Any.Literal.INSTANCE);
+        qualifiers.add(Default.Literal.INSTANCE);
+        return qualifiers;
     }
 }

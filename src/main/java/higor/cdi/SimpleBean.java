@@ -19,6 +19,7 @@ public class SimpleBean<T> implements Bean<T> {
     private final Set<InjectionPoint> injectionPoints;
     private final Constructor<T> constructor;
     private final Producer<T> producer;
+    private final Set<Annotation> qualifiers;
 
     public SimpleBean(Class<T> subtype, Set<InjectionPoint> injectionPoints) {
         this(subtype, injectionPoints, null);
@@ -34,6 +35,7 @@ public class SimpleBean<T> implements Bean<T> {
         this.injectionPoints = injectionPoints;
         this.constructor = constructor;
         this.producer = producer;
+        this.qualifiers = ReflectionsHelper.getQualifiers(subtype);
     }
 
     @Override
@@ -57,8 +59,13 @@ public class SimpleBean<T> implements Bean<T> {
             return producer.produce(null);
         if (constructor == null)
             return newInstanceFromDefaultConstructor(subtype);
-        List<Object> constructorParams = injectionPoints.stream().map(this::resolveParameter).collect(Collectors.toList());
-        return newInstance(constructor, constructorParams);
+        return newInstance(constructor, getConstructorParams());
+    }
+
+    private List<Object> getConstructorParams() {
+        return injectionPoints.stream()
+                .map(this::resolveParameter)
+                .collect(Collectors.toList());
     }
 
     private Object resolveParameter(InjectionPoint injectionPoint) {
@@ -77,7 +84,7 @@ public class SimpleBean<T> implements Bean<T> {
 
     @Override
     public Set<Annotation> getQualifiers() {
-        return Set.of();
+        return qualifiers;
     }
 
     @Override
@@ -87,7 +94,7 @@ public class SimpleBean<T> implements Bean<T> {
 
     @Override
     public String getName() {
-        return null;
+        return subtype.getName();
     }
 
     @Override

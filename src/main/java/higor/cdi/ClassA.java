@@ -4,7 +4,7 @@ import javax.inject.Inject;
 
 public class ClassA {
 
-    @Inject
+//    @Inject
     public ClassA(ClassE e) {
     }
 }
