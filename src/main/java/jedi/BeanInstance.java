@@ -1,9 +1,10 @@
 package jedi;
 
-import javax.enterprise.inject.AmbiguousResolutionException;
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.util.TypeLiteral;
+import jakarta.enterprise.inject.AmbiguousResolutionException;
+import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.util.TypeLiteral;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Iterator;
@@ -44,6 +45,16 @@ public class BeanInstance<T> implements Instance<T> {
 
   @Override
   public <U extends T> Instance<U> select(TypeLiteral<U> typeLiteral, Annotation... annotations) {
+    return null;
+  }
+
+  @Override
+  public Handle<T> getHandle() {
+    return null;
+  }
+
+  @Override
+  public Iterable<? extends Handle<T>> handles() {
     return null;
   }
 

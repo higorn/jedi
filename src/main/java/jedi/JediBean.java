@@ -1,9 +1,10 @@
 package jedi;
 
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.enterprise.inject.spi.Producer;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.InjectionPoint;
+import jakarta.enterprise.inject.spi.Producer;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
@@ -17,9 +18,9 @@ import static jedi.ReflectionsHelper.newInstanceFromDefaultConstructor;
 public class JediBean<T> implements Bean<T> {
   private final Class<T>            subtype;
   private final Set<InjectionPoint> injectionPoints;
-  private final Constructor<T>      constructor;
-  private final Producer<T>         producer;
-  private final Set<Annotation>     qualifiers;
+  private final Constructor<T>  constructor;
+  private final Producer<T>     producer;
+  private final Set<Annotation> qualifiers;
 
   public JediBean(Class<T> subtype, Set<InjectionPoint> injectionPoints) {
     this(subtype, injectionPoints, null);
@@ -46,11 +47,6 @@ public class JediBean<T> implements Bean<T> {
   @Override
   public Set<InjectionPoint> getInjectionPoints() {
     return injectionPoints;
-  }
-
-  @Override
-  public boolean isNullable() {
-    return false;
   }
 
   @Override
