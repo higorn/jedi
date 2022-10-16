@@ -1,11 +1,12 @@
 package jedi.abstractionresolution.withdependencies.complex;
 
 import jakarta.enterprise.inject.spi.CDI;
+import jedi.BeanInstance;
 import jedi.JeDI;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 public class ComplexDependencyResolutionGraphTest {
   interface A {
@@ -80,13 +81,9 @@ public class ComplexDependencyResolutionGraphTest {
 
   private CDI<Object> di;
 
-  @BeforeEach
-  void setUp() {
-    di = new JeDI("jedi.abstractionresolution.withdependencies.complex");
-  }
-
   @Test
   void shouldResolveADependencyGraph() {
+    di = new JeDI("jedi.abstractionresolution.withdependencies.complex");
     var start = di.select(Start.class).get();
     assertNotNull(start.a.getE().getB());
     assertNotNull(start.a.getE().getC().getB());
@@ -95,5 +92,24 @@ public class ComplexDependencyResolutionGraphTest {
     assertNotNull(start.b);
     assertNotNull(start.c.getB());
     assertNotNull(start.d);
+  }
+
+  @Test
+  void shouldCacheVisitedNodes() {
+    di = new JeDI("jedi.abstractionresolution.withdependencies.complex");
+    var instance = (BeanInstance<Start>) di.select(Start.class);
+    var startBean = instance.findBean();
+    var startIterator = startBean.getInjectionPoints().iterator();
+    var aBean = startIterator.next().getBean();
+    var aIterator = aBean.getInjectionPoints().iterator();
+    var eBean = aIterator.next().getBean();
+    var eIterator = eBean.getInjectionPoints().iterator();
+    var bBean = eIterator.next().getBean();
+    var bBean2 = startIterator.next().getBean();
+
+    assertSame(bBean, bBean2);
+    var instanceB = (BeanInstance<B>) di.select(B.class);
+    var beanB= instanceB.findBean();
+    assertSame(bBean, beanB);
   }
 }

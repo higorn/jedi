@@ -12,6 +12,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static jedi.ReflectionsHelper.*;
@@ -20,8 +21,9 @@ import static org.reflections.scanners.Scanners.SubTypes;
 import static org.reflections.util.ReflectionUtilsPredicates.withReturnType;
 
 public class JeDI extends CDI<Object> {
-  private final Set<Class<?>> visited = new HashSet<>();
-  private final InstanceResolver instanceResolver;
+  private final Set<Class<?>>              seen = new HashSet<>();
+  private final Map<Class<?>, Instance<?>> cache = new ConcurrentHashMap<>();
+  private final InstanceResolver           instanceResolver;
 
   public JeDI(String prefix) {
     this(prefix, Scanners.values());
@@ -48,11 +50,14 @@ public class JeDI extends CDI<Object> {
 
   @Override
   public <U> Instance<U> select(Class<U> subtype, Annotation... annotations) {
-    if (visited.contains(subtype))
+    if (cache.containsKey(subtype))
+      return (Instance<U>) cache.get(subtype);
+    if (seen.contains(subtype))
       throw new CircularDependencyException("Circular dependency detected on type [" + subtype.toString() + "]");
-    visited.add(subtype);
-    BeanInstance<U> instance = instanceResolver.resolveInstance(subtype, getQualifiers(annotations));
-    visited.remove(subtype);
+    seen.add(subtype);
+    var instance = instanceResolver.resolveInstance(subtype, getQualifiers(annotations));
+    cache.put(subtype, instance);
+    seen.remove(subtype);
     return instance;
   }
 
@@ -105,8 +110,8 @@ public class JeDI extends CDI<Object> {
       this.cdi = CDI.current();
     }
 
-    public <U> BeanInstance<U> resolveInstance(Class<U> subtype, Set<Annotation> qualifiers) {
-      BeanInstance<U> instance;
+    public <U> Instance<U> resolveInstance(Class<U> subtype, Set<Annotation> qualifiers) {
+      Instance<U> instance;
       if (isAbstraction(subtype))
         instance = new BeanInstance<>(findImplementations(subtype), subtype, qualifiers);
       else if (hasDefaultConstructorOnly(subtype))
