@@ -21,18 +21,22 @@ public class ReflectionsHelper {
 
   private ReflectionsHelper() {}
 
-  public static boolean hasDefaultConstructorOnly(Constructor<?>[] constructors) {
+  public static boolean hasDefaultConstructorOnly(Class<?> subtype) {
+    var constructors = subtype.getConstructors();
     if (constructors.length == 0)
       return true;
     if (constructors.length == 1) {
-      Parameter[] parameters = constructors[0].getParameters();
-      return parameters.length == 0 || isDefaultParameterOfInnerClassEmptyConstructor(parameters);
+      var parameters = constructors[0].getParameters();
+      return parameters.length == 0 || isDefaultConstructorOfNonStaticInnerClassOrLocalClass(parameters, subtype);
     }
+
     return false;
   }
 
-  public static boolean isDefaultParameterOfInnerClassEmptyConstructor(Parameter[] parameters) {
-    return parameters.length == 1 && parameters[0].getName().equals("arg0");
+  public static boolean isDefaultConstructorOfNonStaticInnerClassOrLocalClass(Parameter[] parameters,
+      Class<?> declaringClass) {
+    return parameters.length == 1
+        && (declaringClass.isLocalClass() || parameters[0].getType().equals(declaringClass.getDeclaringClass()));
   }
 
   public static <U> boolean isAbstraction(Class<U> aClass) {
@@ -61,7 +65,7 @@ public class ReflectionsHelper {
   public static <T> T newInstanceFromDefaultConstructor(Class<T> c) {
     var parameters = c.getDeclaredConstructors()[0].getParameters();
     try {
-      if (isDefaultParameterOfInnerClassEmptyConstructor(parameters))
+      if (isDefaultConstructorOfNonStaticInnerClassOrLocalClass(parameters, c))
         return newInnerClassInstance(c, parameters);
       return c.getDeclaredConstructor().newInstance();
     } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
@@ -71,10 +75,9 @@ public class ReflectionsHelper {
 
   private static <T> T newInnerClassInstance(Class<T> c, Parameter[] parameters)
       throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-    var param0 = parameters[0];
-    var type = param0.getType();
-    var o = newInstanceFromDefaultConstructor(type);
-    return c.getDeclaredConstructor(type).newInstance(o);
+    var type = parameters[0].getType();
+    var defaultParamInstance = newInstanceFromDefaultConstructor(type);
+    return c.getDeclaredConstructor(type).newInstance(defaultParamInstance);
   }
 
   public static Set<Annotation> getQualifiers(Parameter p) {

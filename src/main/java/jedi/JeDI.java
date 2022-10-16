@@ -49,7 +49,7 @@ public class JeDI extends CDI<Object> {
   @Override
   public <U> Instance<U> select(Class<U> subtype, Annotation... annotations) {
     if (visited.contains(subtype))
-      throw new CircularDependencyException();
+      throw new CircularDependencyException("Circular dependency detected on type [" + subtype.toString() + "]");
     visited.add(subtype);
     BeanInstance<U> instance = instanceResolver.resolveInstance(subtype, getQualifiers(annotations));
     visited.remove(subtype);
@@ -109,7 +109,7 @@ public class JeDI extends CDI<Object> {
       BeanInstance<U> instance;
       if (isAbstraction(subtype))
         instance = new BeanInstance<>(findImplementations(subtype), subtype, qualifiers);
-      else if (hasDefaultConstructorOnly(subtype.getConstructors()))
+      else if (hasDefaultConstructorOnly(subtype))
         instance = new BeanInstance<>(Set.of(new JediBean<>(subtype, Set.of())));
       else
         instance = new BeanInstance<>(resolveDependencies(subtype));
@@ -161,5 +161,8 @@ public class JeDI extends CDI<Object> {
   }
 
   public static class CircularDependencyException extends RuntimeException {
+    public CircularDependencyException(String message) {
+      super(message);
+    }
   }
 }
