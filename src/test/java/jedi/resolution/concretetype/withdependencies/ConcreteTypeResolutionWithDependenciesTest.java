@@ -1,4 +1,4 @@
-package jedi.concretetyperesolution.withdependencies;
+package jedi.resolution.concretetype.withdependencies;
 
 import jakarta.enterprise.inject.AmbiguousResolutionException;
 import jakarta.enterprise.inject.Produces;
@@ -19,7 +19,7 @@ public class ConcreteTypeResolutionWithDependenciesTest {
 
   @BeforeEach
   void setUp() {
-    di = new JeDI("jedi.concretetyperesolution.withdependencies", Scanners.SubTypes, Scanners.TypesAnnotated);
+    di = new JeDI("jedi.resolution.concretetype.withdependencies", Scanners.SubTypes, Scanners.TypesAnnotated);
   }
 
   @Test
@@ -44,7 +44,7 @@ public class ConcreteTypeResolutionWithDependenciesTest {
     }
   }
   @Test
-  void aClassWithMultipleConstructorsThatCanBeResolved_andWithAnResolvableDependency() {
+  void aClassWithMultipleConstructorsThatCanBeResolved_andWithAResolvableDependency() {
     var cdi = new JeDI("jedi");
     var instance = cdi.select(B.class);
     assertNotNull(instance.get());
@@ -74,23 +74,23 @@ public class ConcreteTypeResolutionWithDependenciesTest {
      * E --------------|
      */
     class A {
-      public A(B b, C2 c) {}
+      public A(B b, C c) {}
     }
     class B {
-      public B(D2 d) {}
+      public B(D d) {}
     }
     class C {
-      public C(E2 e) {}
+      public C(E e) {}
     }
     class D {
-      public D(C2 c) {}
+      public D(C c) {}
     }
     class E {
-      public E(D2 d) {}
+      public E(D d) {}
     }
     @Test
     void case1() {
-      assertThrows(JeDI.CircularDependencyException.class, () -> di.select(A2.class));
+      assertThrows(JeDI.CircularDependencyException.class, () -> di.select(A.class));
     }
 
     /*

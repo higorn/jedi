@@ -5,6 +5,10 @@ import jakarta.enterprise.inject.Produces;
 import jakarta.enterprise.inject.UnsatisfiedResolutionException;
 import jakarta.enterprise.inject.spi.*;
 import jakarta.enterprise.util.TypeLiteral;
+import jedi.bean.BeanInstance;
+import jedi.bean.ManagedBean;
+import jedi.injection.MethodProducer;
+import jedi.injection.ParameterInjectionPoint;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 
@@ -51,7 +55,7 @@ public class JeDI extends CDI<Object> {
   @Override
   public <U> Instance<U> select(Class<U> subtype, Annotation... annotations) {
     if (cache.containsKey(subtype))
-      return (Instance<U>) cache.get(subtype);
+      return cast(cache.get(subtype));
     if (seen.contains(subtype))
       throw new CircularDependencyException("Circular dependency detected on type [" + subtype.toString() + "]");
     seen.add(subtype);
@@ -115,7 +119,7 @@ public class JeDI extends CDI<Object> {
       if (isAbstraction(subtype))
         instance = new BeanInstance<>(findImplementations(subtype), subtype, qualifiers);
       else if (hasDefaultConstructorOnly(subtype))
-        instance = new BeanInstance<>(Set.of(new JediBean<>(subtype, Set.of())));
+        instance = new BeanInstance<>(Set.of(new ManagedBean<>(subtype, Set.of())));
       else
         instance = new BeanInstance<>(resolveDependencies(subtype));
       return instance;
@@ -132,15 +136,15 @@ public class JeDI extends CDI<Object> {
       var producer = getProducer(subtype);
       if (producer == null) {
         var constructor = getInjectableConstructor(subtype);
-        return Set.of(new JediBean<>(subtype, getInjectionPoints(constructor.getParameters()), constructor));
+        return Set.of(new ManagedBean<>(subtype, getInjectionPoints(constructor.getParameters()), constructor));
       }
-      return Set.of(new JediBean<>(subtype, null, null, producer));
+      return Set.of(new ManagedBean<>(subtype, null, null, producer));
     }
 
     private <U> Producer<U> getProducer(Class<U> subtype) {
       return metadata.get(MethodsAnnotated.with(Produces.class).as(Method.class)
               .filter(withReturnType(subtype))).stream()
-          .map(m -> new BeanProducer<U>(m, cdi.select(m.getDeclaringClass())))
+          .map(m -> new MethodProducer<U>(m, cdi.select(m.getDeclaringClass())))
           .findFirst()
           .orElse(null);
     }
@@ -161,7 +165,7 @@ public class JeDI extends CDI<Object> {
             + " as parameter of " + className);
       Instance<?> instance = cdi.select(p.getType(), qualifiers.toArray(new Annotation[] {}));
       Bean<?> bean = ((BeanInstance<?>) instance).findBean();
-      return new ConstructorInjectionPoint(qualifiers, bean);
+      return new ParameterInjectionPoint(qualifiers, bean);
     }
   }
 

@@ -1,4 +1,4 @@
-package jedi.concretetyperesolution;
+package jedi.resolution.concretetype;
 
 import jakarta.enterprise.inject.AmbiguousResolutionException;
 import jakarta.enterprise.inject.spi.CDI;
@@ -16,7 +16,7 @@ public class ConcreteTypeResolutionTest {
 
   @BeforeEach
   void setUp() {
-    di = new JeDI("jedi.concretetyperesolution", Scanners.SubTypes, Scanners.TypesAnnotated);
+    di = new JeDI("jedi.resolution.concretetype", Scanners.SubTypes, Scanners.TypesAnnotated);
   }
 
   public static class A {}

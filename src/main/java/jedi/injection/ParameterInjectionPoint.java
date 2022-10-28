@@ -1,4 +1,4 @@
-package jedi;
+package jedi.injection;
 
 import jakarta.enterprise.inject.spi.Annotated;
 import jakarta.enterprise.inject.spi.Bean;
@@ -9,11 +9,11 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Type;
 import java.util.Set;
 
-public class ConstructorInjectionPoint implements InjectionPoint {
+public class ParameterInjectionPoint implements InjectionPoint {
   private final Set<Annotation> qualifiers;
   private final Bean<?>         bean;
 
-  public ConstructorInjectionPoint(Set<Annotation> qualifiers, Bean<?> bean) {
+  public ParameterInjectionPoint(Set<Annotation> qualifiers, Bean<?> bean) {
     this.qualifiers = qualifiers;
     this.bean = bean;
   }

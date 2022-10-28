@@ -1,4 +1,4 @@
-package jedi.abstractionresolution;
+package jedi.resolution.abstraction;
 
 import jakarta.enterprise.inject.spi.CDI;
 import jedi.JeDI;
@@ -14,7 +14,7 @@ public class AbstractionResolutionTest {
 
   @BeforeEach
   void setUp() {
-    di = new JeDI("jedi", Scanners.SubTypes, Scanners.TypesAnnotated);
+    di = new JeDI("jedi.resolution.abstraction", Scanners.SubTypes, Scanners.TypesAnnotated);
   }
 
   interface A {}
@@ -35,6 +35,8 @@ public class AbstractionResolutionTest {
     var instanceC = di.select(C.class);
     assertTrue(instanceC.isUnsatisfied());
   }
+
+//  void aClassWithAnUnsatisfiedDependency
 
   abstract static class D {}
   public static class CD extends D {}

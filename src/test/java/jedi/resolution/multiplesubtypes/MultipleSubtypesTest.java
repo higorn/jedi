@@ -1,4 +1,4 @@
-package jedi.multiplesubtypes;
+package jedi.resolution.multiplesubtypes;
 
 import jakarta.enterprise.inject.AmbiguousResolutionException;
 import jakarta.enterprise.inject.Produces;
@@ -19,7 +19,7 @@ public class MultipleSubtypesTest {
 
   @BeforeEach
   void setUp() {
-    jedi = new JeDI("jedi.multiplesubtypes");
+    jedi = new JeDI("jedi.resolution.multiplesubtypes");
   }
 
   @Test

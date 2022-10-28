@@ -1,9 +1,10 @@
-package jedi;
+package jedi.bean;
 
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.InjectionPoint;
 import jakarta.enterprise.inject.spi.Producer;
+import jedi.ReflectionsHelper;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -15,22 +16,22 @@ import java.util.stream.Collectors;
 import static jedi.ReflectionsHelper.newInstance;
 import static jedi.ReflectionsHelper.newInstanceFromDefaultConstructor;
 
-public class JediBean<T> implements Bean<T> {
+public class ManagedBean<T> implements Bean<T> {
   private final Class<T>            subtype;
   private final Set<InjectionPoint> injectionPoints;
   private final Constructor<T>  constructor;
   private final Producer<T>     producer;
   private final Set<Annotation> qualifiers;
 
-  public JediBean(Class<T> subtype, Set<InjectionPoint> injectionPoints) {
+  public ManagedBean(Class<T> subtype, Set<InjectionPoint> injectionPoints) {
     this(subtype, injectionPoints, null);
   }
 
-  public JediBean(Class<T> subtype, Set<InjectionPoint> injectionPoints, Constructor<T> constructor) {
+  public ManagedBean(Class<T> subtype, Set<InjectionPoint> injectionPoints, Constructor<T> constructor) {
     this(subtype, injectionPoints, constructor, null);
   }
 
-  public JediBean(Class<T> subtype, Set<InjectionPoint> injectionPoints, Constructor<T> constructor,
+  public ManagedBean(Class<T> subtype, Set<InjectionPoint> injectionPoints, Constructor<T> constructor,
       Producer<T> producer) {
     this.subtype = subtype;
     this.injectionPoints = injectionPoints;
@@ -52,7 +53,7 @@ public class JediBean<T> implements Bean<T> {
   @Override
   public T create(CreationalContext<T> creationalContext) {
     if (producer != null)
-      return producer.produce(null);
+      return producer.produce(creationalContext);
     if (constructor == null)
       return newInstanceFromDefaultConstructor(subtype);
     return newInstance(constructor, getConstructorParams());

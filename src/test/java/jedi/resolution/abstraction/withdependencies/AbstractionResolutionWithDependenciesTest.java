@@ -1,4 +1,4 @@
-package jedi.abstractionresolution.withdependencies;
+package jedi.resolution.abstraction.withdependencies;
 
 import jakarta.enterprise.inject.spi.CDI;
 import jedi.JeDI;
@@ -14,7 +14,7 @@ public class AbstractionResolutionWithDependenciesTest {
 
   @BeforeEach
   void setUp() {
-    di = new JeDI("jedi.abstractionresolution.withdependencies");
+    di = new JeDI("jedi.resolution.abstraction.withdependencies");
   }
 
   interface Z {}

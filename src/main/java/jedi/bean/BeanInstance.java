@@ -1,4 +1,4 @@
-package jedi;
+package jedi.bean;
 
 import jakarta.enterprise.inject.AmbiguousResolutionException;
 import jakarta.enterprise.inject.Instance;

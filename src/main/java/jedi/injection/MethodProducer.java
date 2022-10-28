@@ -1,4 +1,4 @@
-package jedi;
+package jedi.injection;
 
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.Instance;
@@ -10,11 +10,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
 
-public class BeanProducer<T> implements Producer<T> {
+import static jedi.ReflectionsHelper.cast;
+
+public class MethodProducer<T> implements Producer<T> {
   private final Method      producerMethod;
   private final Instance<?> producerDeclaringClassInstance;
 
-  public BeanProducer(Method m, Instance<?> instance) {
+  public MethodProducer(Method m, Instance<?> instance) {
     producerMethod = m;
     producerDeclaringClassInstance = instance;
   }
@@ -23,7 +25,7 @@ public class BeanProducer<T> implements Producer<T> {
   public T produce(CreationalContext creationalContext) {
     var producerClassInstance = producerDeclaringClassInstance.get();
     try {
-      return (T) producerMethod.invoke(producerClassInstance);
+      return cast(producerMethod.invoke(producerClassInstance));
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new ReflectionsException(e);
     }

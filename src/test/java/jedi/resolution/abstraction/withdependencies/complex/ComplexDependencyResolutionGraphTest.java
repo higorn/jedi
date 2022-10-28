@@ -1,8 +1,8 @@
-package jedi.abstractionresolution.withdependencies.complex;
+package jedi.resolution.abstraction.withdependencies.complex;
 
 import jakarta.enterprise.inject.spi.CDI;
-import jedi.BeanInstance;
 import jedi.JeDI;
+import jedi.bean.BeanInstance;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -83,7 +83,7 @@ public class ComplexDependencyResolutionGraphTest {
 
   @Test
   void shouldResolveADependencyGraph() {
-    di = new JeDI("jedi.abstractionresolution.withdependencies.complex");
+    di = new JeDI("jedi.resolution.abstraction.withdependencies.complex");
     var start = di.select(Start.class).get();
     assertNotNull(start.a.getE().getB());
     assertNotNull(start.a.getE().getC().getB());
@@ -96,7 +96,7 @@ public class ComplexDependencyResolutionGraphTest {
 
   @Test
   void shouldCacheVisitedNodes() {
-    di = new JeDI("jedi.abstractionresolution.withdependencies.complex");
+    di = new JeDI("jedi.resolution.abstraction.withdependencies.complex");
     var instance = (BeanInstance<Start>) di.select(Start.class);
     var startBean = instance.findBean();
     var startIterator = startBean.getInjectionPoints().iterator();
