@@ -1,14 +1,72 @@
-package jedi.resolution.abstraction.withdependencies.complex;
+package jedi.resolution.dependenttype;
 
-import jakarta.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.AmbiguousResolutionException;
+import jakarta.enterprise.inject.UnsatisfiedResolutionException;
+import jakarta.inject.Inject;
 import jedi.JeDI;
 import jedi.bean.BeanInstance;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class ComplexDependencyResolutionGraphTest {
+public class DependentTypesResolutionTest {
+
+  private JeDI di;
+
+  @BeforeEach
+  void setUp() {
+    di = new JeDI("jedi.resolution.dependenttype");
+  }
+
+  @Test
+  void aClassWithMultipleConstructorsThatCanBeResolved_andWithAnUnresolvableDependency() {
+    class A {
+      public A() {}
+      @Inject
+      public A(String str) {}
+    }
+    var exception = assertThrows(AmbiguousResolutionException.class, () -> di.select(A.class));
+    assertTrue(exception.getMessage().contains("Ambiguous constructors"));
+  }
+
+  public static class Z {
+    public Z() {}
+    @Inject
+    public Z(B b) {}
+  }
+  @Test
+  void aClassWithMultipleConstructorsThatCanBeResolved_andWithAResolvableDependency() {
+    var instance = di.select(Z.class);
+    assertNotNull(instance.get());
+  }
+
+  interface Dependency {}
+  public static class Dependent {
+    public Dependent(Dependency dependency) {}
+  }
+  @Test
+  void aClassWithAnUnresolvableDependency() {
+    var exception = assertThrows(UnsatisfiedResolutionException.class,
+        () -> di.getBean(Dependent.class));
+    assertTrue(exception.getMessage().contains("No qualified bean found for type " + Dependency.class.getTypeName()));
+  }
+
+
+  /*
+   *    |----------------------------
+   *    |                           |
+   *    |                           v
+   *  start ----> A -----> E -----> C
+   *    |         |        | \     /
+   *    |         v        |  \   /
+   *    |-------->D        |   \ /
+   *    |         ^        v    v
+   *    |         |--------F    B
+   *    |                       ^
+   *    |                       |
+   *    |------------------------
+   */
   interface A {
     E getE();
     D getD();
@@ -78,12 +136,8 @@ public class ComplexDependencyResolutionGraphTest {
     }
   }
   public static class JD implements D {}
-
-  private CDI<Object> di;
-
   @Test
-  void shouldResolveADependencyGraph() {
-    di = new JeDI("jedi.resolution.abstraction.withdependencies.complex");
+  void deepDependencyGraphResolution() {
     var start = di.select(Start.class).get();
     assertNotNull(start.a.getE().getB());
     assertNotNull(start.a.getE().getC().getB());
@@ -96,7 +150,6 @@ public class ComplexDependencyResolutionGraphTest {
 
   @Test
   void shouldCacheVisitedNodes() {
-    di = new JeDI("jedi.resolution.abstraction.withdependencies.complex");
     var instance = (BeanInstance<Start>) di.select(Start.class);
     var startBean = instance.findBean();
     var startIterator = startBean.getInjectionPoints().iterator();

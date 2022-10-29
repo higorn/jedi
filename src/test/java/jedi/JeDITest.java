@@ -25,14 +25,14 @@ class JeDITest {
     assertNotNull(a);
   }
 
-  //        @Test
+//          @Test
   void implementationAmbiguity() {
     //        class B implements A {}
     //        class C implements A {}
     Weld weld = new Weld();
     WeldContainer container = weld.initialize();
     //        var instance = container.select(ClassA.class);
-    var instance = container.select(ClassD.class);
+    var instance = container.select(ClassA.class);
     var d = instance.get();
     //        A a = cdi.select(A.class).get();
     //        assertNotNull(d);

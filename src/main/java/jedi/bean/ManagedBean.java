@@ -54,16 +54,16 @@ public class ManagedBean<T> implements Bean<T> {
   public T create(CreationalContext<T> creationalContext) {
     if (producer != null)
       return producer.produce(creationalContext);
-    if (constructor == null)
-      return newInstanceFromDefaultConstructor(subtype);
-    return newInstance(constructor, getConstructorParams());
+    if (constructor != null)
+      return newInstance(constructor, getConstructorArgs());
+    return newInstanceFromDefaultConstructor(subtype);
   }
 
-  private List<Object> getConstructorParams() {
-    return injectionPoints.stream().map(this::resolveParameter).collect(Collectors.toList());
+  private List<Object> getConstructorArgs() {
+    return injectionPoints.stream().map(this::resolveArgs).collect(Collectors.toList());
   }
 
-  private Object resolveParameter(InjectionPoint injectionPoint) {
+  private Object resolveArgs(InjectionPoint injectionPoint) {
     return injectionPoint.getBean().create(null);
   }
 

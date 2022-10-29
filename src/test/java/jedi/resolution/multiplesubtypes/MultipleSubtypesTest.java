@@ -26,7 +26,8 @@ public class MultipleSubtypesTest {
   void multipleSubtypesWithoutQualifier() {
     var instance = jedi.select(Saber.class);
     assertTrue(instance.isAmbiguous());
-    assertThrows(AmbiguousResolutionException.class, instance::get);
+    var e = assertThrows(AmbiguousResolutionException.class, instance::get);
+    assertTrue(e.getMessage().contains("Ambiguous dependencies for type " + Saber.class.getTypeName()));
   }
 
   @Test

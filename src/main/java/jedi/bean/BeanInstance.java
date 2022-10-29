@@ -2,6 +2,7 @@ package jedi.bean;
 
 import jakarta.enterprise.inject.AmbiguousResolutionException;
 import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.inject.UnsatisfiedResolutionException;
 import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.util.TypeLiteral;
 
@@ -98,6 +99,9 @@ public class BeanInstance<T> implements Instance<T> {
     var qualifiedBeans = allBeans.stream()
         .filter(b -> b.getQualifiers().containsAll(qualifiers))
         .collect(Collectors.toSet());
+    if (qualifiedBeans.isEmpty())
+      throw new UnsatisfiedResolutionException("No qualified bean found for type "
+          + superType.getTypeName() + " with qualifiers " + qualifiers);
     if (qualifiedBeans.size() > 1)
       throw new AmbiguousResolutionException(getAmbiguousResolutionExceptionMesage());
 

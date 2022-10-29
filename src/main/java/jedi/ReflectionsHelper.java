@@ -54,9 +54,9 @@ public class ReflectionsHelper {
             + ". Annotate at least one constructor with the @Inject annotation."));
   }
 
-  public static <U> U newInstance(Constructor<U> constructor, List<Object> params) {
+  public static <U> U newInstance(Constructor<U> constructor, List<Object> args) {
     try {
-      return constructor.newInstance(params.toArray());
+      return constructor.newInstance(args.toArray());
     } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
       throw new ReflectionsException(e);
     }
