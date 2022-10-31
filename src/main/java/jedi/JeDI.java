@@ -24,10 +24,10 @@ import static jedi.ReflectionsHelper.*;
 import static org.reflections.scanners.Scanners.SubTypes;
 
 public class JeDI extends CDI<Object> {
-  private final Set<Class<?>>              seen = new HashSet<>();
-  private final Map<Class<?>, Instance<?>> cache = new ConcurrentHashMap<>();
-  private final InstanceResolver           instanceResolver;
-  private final Reflections                metadata;
+  private final Set<QualifiedType<?>>              seen = new HashSet<>();
+  private final Map<QualifiedType<?>, Instance<?>> cache = new ConcurrentHashMap<>();
+  private final InstanceResolver                   instanceResolver;
+  private final Reflections                        metadata;
 
   public JeDI(String prefix) {
     this(prefix, Scanners.values());
@@ -59,14 +59,16 @@ public class JeDI extends CDI<Object> {
 
   @Override
   public <U> Instance<U> select(Class<U> subtype, Annotation... annotations) {
-    if (cache.containsKey(subtype))
-      return cast(cache.get(subtype));
-    if (seen.contains(subtype))
+    Set<Annotation> qualifiers = getQualifiers(annotations);
+    var qualifiedType = new QualifiedType<>(subtype, qualifiers);
+    if (cache.containsKey(qualifiedType))
+      return cast(cache.get(qualifiedType));
+    if (seen.contains(qualifiedType))
       throw new CircularDependencyException("Circular dependency detected on type [" + subtype.toString() + "]");
-    seen.add(subtype);
-    var instance = instanceResolver.resolveInstance(subtype, getQualifiers(annotations));
-    cache.put(subtype, instance);
-    seen.remove(subtype);
+    seen.add(qualifiedType);
+    var instance = instanceResolver.resolveInstance(subtype, qualifiers);
+    cache.put(qualifiedType, instance);
+    seen.remove(qualifiedType);
     return instance;
   }
 
@@ -110,6 +112,34 @@ public class JeDI extends CDI<Object> {
     return null;
   }
 
+  static class QualifiedType<T> {
+    private final Class<T> type;
+    private final Set<Annotation> qualifiers;
+
+    public QualifiedType(Class<T> type, Set<Annotation> qualifiers) {
+      this.type = type;
+      this.qualifiers = qualifiers;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof QualifiedType))
+        return false;
+      QualifiedType<T> other = cast(obj);
+      return this.type.equals(other.type) && this.qualifiers.equals(other.qualifiers);
+    }
+
+    @Override
+    public int hashCode() {
+      return type != null && qualifiers != null
+          ? type.hashCode() + qualifiers.stream()
+          .map(Annotation::annotationType)
+          .map(Class::hashCode)
+          .reduce(0, Integer::sum)
+          : super.hashCode();
+    }
+  }
+
   class InstanceResolver {
     private final CDI<Object> cdi;
     private final ProducerFactory producerFactory;
@@ -120,7 +150,7 @@ public class JeDI extends CDI<Object> {
     }
 
     public <U> Instance<U> resolveInstance(Class<U> subtype, Set<Annotation> qualifiers) {
-      var producer = producerFactory.getProducer(subtype);
+      var producer = producerFactory.getProducer(subtype, qualifiers.toArray(new Annotation[]{}));
       if (producer != null)
         return new BeanInstance<>(Set.of(new ManagedBean<>(subtype, null, null, producer)));
       if (isAbstraction(subtype))
@@ -130,6 +160,7 @@ public class JeDI extends CDI<Object> {
       return new BeanInstance<>(resolveDependencies(subtype));
     }
 
+    @SuppressWarnings("unchecked")
     private <U> Set<Bean<U>> findImplementations(Class<U> subtype) {
       var subTypes = metadata.get(SubTypes.of(subtype).asClass());
       return subTypes.stream()

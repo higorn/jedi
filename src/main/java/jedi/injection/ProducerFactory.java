@@ -2,7 +2,6 @@ package jedi.injection;
 
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
-import jakarta.enterprise.inject.UnsatisfiedResolutionException;
 import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.CDI;
 import jakarta.enterprise.inject.spi.InjectionPoint;
@@ -19,7 +18,9 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static jedi.ReflectionsHelper.cast;
 import static jedi.ReflectionsHelper.getQualifiers;
+import static jedi.injection.ProducerHelperPredicates.*;
 import static org.reflections.scanners.Scanners.MethodsAnnotated;
 import static org.reflections.util.ReflectionUtilsPredicates.withReturnType;
 
@@ -32,12 +33,26 @@ public class ProducerFactory {
     this.metadata = jedi.getMetadata();
   }
 
-  public <U> Producer<U> getProducer(Class<U> subtype) {
-    return metadata.get(MethodsAnnotated.with(Produces.class).as(Method.class)
-            .filter(withReturnType(subtype))).stream()
-        .map(m -> new MethodProducer<U>(m, jedi.select(m.getDeclaringClass()), getInjectionPoints(m.getParameters())))
+  public <U> Producer<U> getProducer(Class<U> subtype, Annotation... annotations) {
+    return getProducer(subtype, getBeanName(subtype), annotations);
+  }
+
+  public <U> Producer<U> getProducer(Class<U> subtype, String beanName, Annotation... annotations) {
+    var qualifiers = getQualifiers(annotations);
+    Set<Method> methods = metadata.get(MethodsAnnotated.with(Produces.class)
+        .as(Method.class)
+        .filter(withReturnType(subtype))
+        .filter(withQualifiers(qualifiers)));
+    if (methods.size() > 1)
+      methods = methods.stream().filter(withBeanName(beanName)).collect(Collectors.toSet());
+    return cast(methods.stream()
+        .map(this::getMethodProducer)
         .findFirst()
-        .orElse(null);
+        .orElse(null));
+  }
+
+  private <U> Producer<U> getMethodProducer(Method m) {
+    return new MethodProducer<>(m, jedi.select(m.getDeclaringClass()), getInjectionPoints(m.getParameters()));
   }
 
   private Set<InjectionPoint> getInjectionPoints(Parameter[] parameters) {
@@ -48,11 +63,6 @@ public class ProducerFactory {
   }
 
   private InjectionPoint resolveInjectionPoints(Parameter p) {
-    if (p.getType().isPrimitive()) {
-      var className = p.getDeclaringExecutable().getDeclaringClass().getName();
-      throw new UnsatisfiedResolutionException(
-          "Unsatisfied dependencies for type " + p.getType().getSimpleName() + " as parameter of " + className);
-    }
     var qualifiers = getQualifiers(p);
     Instance<?> instance = jedi.select(p.getType(), qualifiers.toArray(new Annotation[] {}));
     Bean<?> bean = ((BeanInstance<?>) instance).findBean();

@@ -8,10 +8,7 @@ import jakarta.inject.Qualifier;
 import org.reflections.ReflectionsException;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -43,6 +40,7 @@ public class ReflectionsHelper {
     return aClass.isInterface() || Modifier.isAbstract(aClass.getModifiers());
   }
 
+  @SuppressWarnings("unchecked")
   public static <U> Constructor<U> getInjectableConstructor(Class<U> subtype) {
     var constructors = (Constructor<U>[]) subtype.getConstructors();
     if (constructors.length == 1)
@@ -86,6 +84,10 @@ public class ReflectionsHelper {
 
   public static <T> Set<Annotation> getQualifiers(Class<T> clazz) {
     return getQualifiers(clazz.getAnnotations());
+  }
+
+  public static <T> Set<Annotation> getQualifiers(Method method) {
+    return getQualifiers(method.getAnnotations());
   }
 
   public static Set<Annotation> getQualifiers(Annotation... annotations) {
