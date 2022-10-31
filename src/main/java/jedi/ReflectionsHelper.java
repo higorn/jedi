@@ -8,10 +8,7 @@ import jakarta.inject.Qualifier;
 import org.reflections.ReflectionsException;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -43,6 +40,7 @@ public class ReflectionsHelper {
     return aClass.isInterface() || Modifier.isAbstract(aClass.getModifiers());
   }
 
+  @SuppressWarnings("unchecked")
   public static <U> Constructor<U> getInjectableConstructor(Class<U> subtype) {
     var constructors = (Constructor<U>[]) subtype.getConstructors();
     if (constructors.length == 1)
@@ -54,9 +52,9 @@ public class ReflectionsHelper {
             + ". Annotate at least one constructor with the @Inject annotation."));
   }
 
-  public static <U> U newInstance(Constructor<U> constructor, List<Object> params) {
+  public static <U> U newInstance(Constructor<U> constructor, List<Object> args) {
     try {
-      return constructor.newInstance(params.toArray());
+      return constructor.newInstance(args.toArray());
     } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
       throw new ReflectionsException(e);
     }
@@ -88,6 +86,10 @@ public class ReflectionsHelper {
     return getQualifiers(clazz.getAnnotations());
   }
 
+  public static <T> Set<Annotation> getQualifiers(Method method) {
+    return getQualifiers(method.getAnnotations());
+  }
+
   public static Set<Annotation> getQualifiers(Annotation... annotations) {
     var qualifiers = Arrays.stream(annotations)
         .filter(a -> a.annotationType().getAnnotation(Qualifier.class) != null)
@@ -95,5 +97,10 @@ public class ReflectionsHelper {
     qualifiers.add(Any.Literal.INSTANCE);
     qualifiers.add(Default.Literal.INSTANCE);
     return qualifiers;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> T cast(Object obj) {
+    return (T) obj;
   }
 }

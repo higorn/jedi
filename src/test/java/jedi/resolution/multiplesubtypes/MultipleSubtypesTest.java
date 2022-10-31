@@ -1,4 +1,4 @@
-package jedi.multiplesubtypes;
+package jedi.resolution.multiplesubtypes;
 
 import jakarta.enterprise.inject.AmbiguousResolutionException;
 import jakarta.enterprise.inject.Produces;
@@ -19,14 +19,15 @@ public class MultipleSubtypesTest {
 
   @BeforeEach
   void setUp() {
-    jedi = new JeDI("jedi.multiplesubtypes");
+    jedi = new JeDI("jedi.resolution.multiplesubtypes");
   }
 
   @Test
   void multipleSubtypesWithoutQualifier() {
     var instance = jedi.select(Saber.class);
     assertTrue(instance.isAmbiguous());
-    assertThrows(AmbiguousResolutionException.class, instance::get);
+    var e = assertThrows(AmbiguousResolutionException.class, instance::get);
+    assertTrue(e.getMessage().contains("Ambiguous dependencies for type " + Saber.class.getTypeName()));
   }
 
   @Test

@@ -1,4 +1,4 @@
-package jedi;
+package jedi.injection;
 
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.Instance;
@@ -10,23 +10,35 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
 
-public class BeanProducer<T> implements Producer<T> {
+import static jedi.ReflectionsHelper.cast;
+
+public class MethodProducer<T> implements Producer<T> {
   private final Method      producerMethod;
   private final Instance<?> producerDeclaringClassInstance;
+  private final Set<InjectionPoint> injectionPoints;
 
-  public BeanProducer(Method m, Instance<?> instance) {
+  public MethodProducer(Method m, Instance<?> instance, Set<InjectionPoint> injectionPoints) {
     producerMethod = m;
     producerDeclaringClassInstance = instance;
+    this.injectionPoints = injectionPoints;
   }
 
   @Override
   public T produce(CreationalContext creationalContext) {
     var producerClassInstance = producerDeclaringClassInstance.get();
     try {
-      return (T) producerMethod.invoke(producerClassInstance);
+      return cast(producerMethod.invoke(producerClassInstance, getMethodArgs()));
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new ReflectionsException(e);
     }
+  }
+
+  private Object[] getMethodArgs() {
+    return injectionPoints.stream().map(this::resolveArgs).toArray();
+  }
+
+  private Object resolveArgs(InjectionPoint injectionPoint) {
+    return injectionPoint.getBean().create(null);
   }
 
   @Override
@@ -36,6 +48,6 @@ public class BeanProducer<T> implements Producer<T> {
 
   @Override
   public Set<InjectionPoint> getInjectionPoints() {
-    return Set.of();
+    return injectionPoints;
   }
 }
