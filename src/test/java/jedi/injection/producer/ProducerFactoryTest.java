@@ -1,4 +1,4 @@
-package jedi.injection;
+package jedi.injection.producer;
 
 import jakarta.enterprise.inject.Produces;
 import jakarta.enterprise.inject.spi.Producer;
@@ -27,10 +27,10 @@ public class ProducerFactoryTest {
     producerFactory = new ProducerFactory();
   }
 
-  static class A {}
+  interface A {}
   @Test
   void producerDoesNotExists() {
-    assertNull(producerFactory.getProducer(A.class));
+    assertNull(producerFactory.createProducer(A.class));
   }
 
   static class B {}
@@ -40,7 +40,7 @@ public class ProducerFactoryTest {
   }
   @Test
   void producerWithoutParameters() {
-    Producer<B> producer = producerFactory.getProducer(B.class);
+    Producer<B> producer = producerFactory.createProducer(B.class);
     assertTrue(producer instanceof MethodProducer);
     assertNotNull(producer.produce(null));
   }
@@ -54,7 +54,7 @@ public class ProducerFactoryTest {
   }
   @Test
   void producerWithASingleParameter() {
-    Producer<C> producer = producerFactory.getProducer(C.class);
+    Producer<C> producer = producerFactory.createProducer(C.class);
     assertTrue(producer instanceof MethodProducer);
     var c = producer.produce(null);
     assertNotNull(c.getB());
@@ -82,7 +82,7 @@ public class ProducerFactoryTest {
   }
   @Test
   void producerWithMultipleParameters() {
-    Producer<D> producer = producerFactory.getProducer(D.class);
+    Producer<D> producer = producerFactory.createProducer(D.class);
     var d = producer.produce(null);
     assertNotNull(d.c.getB());
     assertNotNull(d.b);
@@ -106,7 +106,7 @@ public class ProducerFactoryTest {
   }
   @Test
   void producerWitQualifier() throws NoSuchMethodException {
-    Producer<C> producer = producerFactory.getProducer(C.class, getNamedQualifier());
+    Producer<C> producer = producerFactory.createProducer(C.class, getNamedQualifier());
     var c = producer.produce(null);
     assertNotNull(c.getB());
     assertTrue(c instanceof EC);
@@ -151,9 +151,29 @@ public class ProducerFactoryTest {
   }
   @Test
   void producerWithQualifiedParameters() {
-    Producer<Order> producer = producerFactory.getProducer(Order.class);
+    Producer<Order> producer = producerFactory.createProducer(Order.class);
     var order = producer.produce(null);
     assertNotNull(order.payment);
     assertTrue(order.payment instanceof SyncPayment);
+
+    PaymentProvider.isAsync = true;
+    order = producer.produce(null);
+    assertTrue(order.payment instanceof AsyncPayment);
+  }
+
+  static class OrderConfirmation {
+    final Payment payment;
+    public OrderConfirmation(Payment payment) {
+      this.payment = payment;
+    }
+  }
+  @Test
+  void producerConstructor() {
+    Producer<OrderConfirmation> producer = producerFactory.createProducer(OrderConfirmation.class);
+    assertNotNull(producer);
+    assertTrue(producer instanceof ConstructorProducer);
+  }
+  void ambiguousProducerForTheSameType() {
+
   }
 }

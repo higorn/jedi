@@ -1,22 +1,21 @@
 package jedi;
 
 import jakarta.enterprise.inject.Instance;
-import jakarta.enterprise.inject.UnsatisfiedResolutionException;
 import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.enterprise.inject.spi.CDI;
-import jakarta.enterprise.inject.spi.InjectionPoint;
 import jakarta.enterprise.util.TypeLiteral;
 import jedi.bean.BeanInstance;
 import jedi.bean.ManagedBean;
-import jedi.injection.ParameterInjectionPoint;
-import jedi.injection.ProducerFactory;
+import jedi.injection.producer.ProducerFactory;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Parameter;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -26,7 +25,7 @@ import static org.reflections.scanners.Scanners.SubTypes;
 public class JeDI extends CDI<Object> {
   private final Set<QualifiedType<?>>              seen = new HashSet<>();
   private final Map<QualifiedType<?>, Instance<?>> cache = new ConcurrentHashMap<>();
-  private final InstanceResolver                   instanceResolver;
+  private final ProducerFactory                    producerFactory;
   private final Reflections                        metadata;
 
   public JeDI(String prefix) {
@@ -36,7 +35,7 @@ public class JeDI extends CDI<Object> {
   public JeDI(String prefix, Scanners... scanners) {
     setCDIProvider(() -> this);
     metadata = new Reflections(prefix, scanners);
-    instanceResolver = new InstanceResolver(new ProducerFactory());
+    producerFactory = new ProducerFactory();
   }
 
   public Reflections getMetadata() {
@@ -66,10 +65,25 @@ public class JeDI extends CDI<Object> {
     if (seen.contains(qualifiedType))
       throw new CircularDependencyException("Circular dependency detected on type [" + subtype.toString() + "]");
     seen.add(qualifiedType);
-    var instance = instanceResolver.resolveInstance(subtype, qualifiers);
+    var instance = resolveInstance(subtype, qualifiers);
     cache.put(qualifiedType, instance);
     seen.remove(qualifiedType);
     return instance;
+  }
+
+  public <U> Instance<U> resolveInstance(Class<U> subtype, Set<Annotation> qualifiers) {
+    var producer = producerFactory.createProducer(subtype, qualifiers.toArray(new Annotation[]{}));
+    if (producer == null && isAbstraction(subtype))
+      return new BeanInstance<>(findImplementations(subtype), subtype, qualifiers);
+    return new BeanInstance<>(Set.of(new ManagedBean<>(subtype, producer)));
+  }
+
+  @SuppressWarnings("unchecked")
+  private <U> Set<Bean<U>> findImplementations(Class<U> subtype) {
+    var subTypes = metadata.get(SubTypes.of(subtype).asClass());
+    return subTypes.stream()
+        .map(c -> ((BeanInstance<U>) select(c)).findBean())
+        .collect(Collectors.toSet());
   }
 
   @Override
@@ -137,65 +151,6 @@ public class JeDI extends CDI<Object> {
           .map(Class::hashCode)
           .reduce(0, Integer::sum)
           : super.hashCode();
-    }
-  }
-
-  class InstanceResolver {
-    private final CDI<Object> cdi;
-    private final ProducerFactory producerFactory;
-
-    InstanceResolver(ProducerFactory producerFactory) {
-      this.producerFactory = producerFactory;
-      this.cdi = CDI.current();
-    }
-
-    public <U> Instance<U> resolveInstance(Class<U> subtype, Set<Annotation> qualifiers) {
-      var producer = producerFactory.getProducer(subtype, qualifiers.toArray(new Annotation[]{}));
-      if (producer != null)
-        return new BeanInstance<>(Set.of(new ManagedBean<>(subtype, null, null, producer)));
-      if (isAbstraction(subtype))
-        return new BeanInstance<>(findImplementations(subtype), subtype, qualifiers);
-      if (hasDefaultConstructorOnly(subtype))
-        return new BeanInstance<>(Set.of(new ManagedBean<>(subtype, Set.of())));
-      return new BeanInstance<>(resolveDependencies(subtype));
-    }
-
-    @SuppressWarnings("unchecked")
-    private <U> Set<Bean<U>> findImplementations(Class<U> subtype) {
-      var subTypes = metadata.get(SubTypes.of(subtype).asClass());
-      return subTypes.stream()
-          .map(c -> ((BeanInstance<U>) cdi.select(c)).findBean())
-          .collect(Collectors.toSet());
-    }
-
-    private <U> Set<Bean<U>> resolveDependencies(Class<U> subtype) {
-      var constructor = getInjectableConstructor(subtype);
-      return Set.of(new ManagedBean<>(subtype, getInjectionPoints(constructor.getParameters()), constructor));
-    }
-
-    private Set<InjectionPoint> getInjectionPoints(Parameter[] parameters) {
-      // As this injection points are used to resolve constructor params, they need to be in order,
-      // that's why it needs to be an ordered set.
-      return Arrays.stream(parameters)
-          .map(this::resolveInjectionPoints)
-          .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    private InjectionPoint resolveInjectionPoints(Parameter p) {
-      if (p.getType().isPrimitive()) {
-        var className = p.getDeclaringExecutable().getDeclaringClass().getName();
-        throw new UnsatisfiedResolutionException("Unsatisfied dependencies for type " + p.getType().getSimpleName()
-            + " as parameter of " + className);
-      }
-      var qualifiers = getQualifiers(p);
-//      var producer = getProducer(p.getType());
-//      if (producer == null) {
-        Instance<?> instance = cdi.select(p.getType(), qualifiers.toArray(new Annotation[] {}));
-        Bean<?> bean = ((BeanInstance<?>) instance).findBean();
-        return new ParameterInjectionPoint(qualifiers, bean);
-//      }
-//      Bean<?> bean = new ManagedBean(p.getType(), null, null, producer);
-//      return new ParameterInjectionPoint(qualifiers, bean);
     }
   }
 
