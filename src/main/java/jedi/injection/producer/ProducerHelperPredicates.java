@@ -1,4 +1,4 @@
-package jedi.injection;
+package jedi.injection.producer;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;

@@ -1,4 +1,4 @@
-package jedi.injection;
+package jedi.injection.producer;
 
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.Instance;

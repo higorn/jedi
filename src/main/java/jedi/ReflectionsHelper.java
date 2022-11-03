@@ -36,46 +36,30 @@ public class ReflectionsHelper {
         && (declaringClass.isLocalClass() || parameters[0].getType().equals(declaringClass.getDeclaringClass()));
   }
 
-  public static <U> boolean isAbstraction(Class<U> aClass) {
+  public static <T> boolean isAbstraction(Class<T> aClass) {
     return aClass.isInterface() || Modifier.isAbstract(aClass.getModifiers());
   }
 
   @SuppressWarnings("unchecked")
-  public static <U> Constructor<U> getInjectableConstructor(Class<U> subtype) {
-    var constructors = (Constructor<U>[]) subtype.getConstructors();
-    if (constructors.length == 1)
-      return constructors[0];
-    return Arrays.stream(constructors)
-        .filter(c -> c.isAnnotationPresent(Inject.class))
-        .findFirst()
-        .orElseThrow(() -> new AmbiguousResolutionException("Ambiguous constructors in class " + subtype.getName()
-            + ". Annotate at least one constructor with the @Inject annotation."));
+  public static <T> Constructor<T> getInjectableConstructor(Class<T> subtype) {
+    if (hasDefaultConstructorOnly(subtype))
+      return cast(subtype.getDeclaredConstructors()[0]);
+    var constructors = (Constructor<T>[]) subtype.getConstructors();
+    if (constructors.length > 1)
+      return Arrays.stream(constructors)
+          .filter(c -> c.isAnnotationPresent(Inject.class))
+          .findFirst()
+          .orElseThrow(() -> new AmbiguousResolutionException("Ambiguous constructors in class " + subtype.getName()
+              + ". Annotate at least one constructor with the @Inject annotation."));
+    return constructors[0];
   }
 
-  public static <U> U newInstance(Constructor<U> constructor, List<Object> args) {
+  public static <T> T newInstance(Constructor<T> constructor, List<Object> args) {
     try {
       return constructor.newInstance(args.toArray());
     } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
       throw new ReflectionsException(e);
     }
-  }
-
-  public static <T> T newInstanceFromDefaultConstructor(Class<T> c) {
-    var parameters = c.getDeclaredConstructors()[0].getParameters();
-    try {
-      if (isDefaultConstructorOfNonStaticInnerClassOrLocalClass(parameters, c))
-        return newInnerClassInstance(c, parameters);
-      return c.getDeclaredConstructor().newInstance();
-    } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
-      throw new ReflectionsException(e);
-    }
-  }
-
-  private static <T> T newInnerClassInstance(Class<T> c, Parameter[] parameters)
-      throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-    var type = parameters[0].getType();
-    var defaultParamInstance = newInstanceFromDefaultConstructor(type);
-    return c.getDeclaredConstructor(type).newInstance(defaultParamInstance);
   }
 
   public static Set<Annotation> getQualifiers(Parameter p) {
